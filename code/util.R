@@ -49,6 +49,9 @@ results_tbl <-
 #' Construct a (possibly schema-qualified) intermediate result table name
 #' @md
 #'
+#' It the name passed in is already the result of a call to
+#' [dbplyr::in_schema()], then no further modification is made.
+#'
 #' @param name The name of the table
 #' @param temp Logical indicating whether the table is temporary.
 #'     Defaults to the negation of `config(retain_intermed)`.
@@ -56,7 +59,8 @@ results_tbl <-
 #' @return A [dplyr::tbl()]] pointing to the table
 intermed_name <- function(name,
                           temporary = ! config('retain_intermediates')) {
-    if ( ! temporary  & ! is.na(config('result_schema')) )
+  if ( ! temporary  & ! is.na(config('result_schema')) &
+       ! any(class(name) == 'ident_q') )
         dbplyr::in_schema(config('result_schema'), name)
     else name
 }
@@ -153,9 +157,11 @@ db_exists_table <- function(db, table) {
 compute_new <- function(tblx,
                         name = paste0(sample(letters, 12, replace = TRUE),
                                       collapse = ""),
+                        temporary = ! config('retain_intermediates'),
                         ...) {
     con <- if (inherits(tblx$src, 'src_dbi')) tblx$src$con else tblx$src
     if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
-    dplyr::compute(tblx, name = name, ...)
+    if (! temporary ) name <- intermed_name(name, temporary)
+    dplyr::compute(tblx, name = name, temporary = temporary, ...)
 }
 
