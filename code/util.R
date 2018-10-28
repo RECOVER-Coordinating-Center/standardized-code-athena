@@ -114,6 +114,26 @@ append_sum <- function(cur, ...) {
                  cur)
 }
 
+#' Test whether a table exists in a database, schema-aware
+#' @md
+#'
+#' This function has the same purpose as DBI::dbExistsTable() or
+#' dbplyr::db_drop_table(), but neither of these are able to test a
+#' table name created by dbplyr::in_schema().
+#'
+#' @param db A [dplyr::src()] or DBI connection
+#' @param table The name of the table, or an object created by
+#'   [dbplyr::in_schema()], or a DBI-style path vector
+#'
+#' @return TRUE if the table exists, and FALSE otherwise.
+db_exists_table <- function(db, table) {
+  con <- if (inherits(db, 'src_dbi')) db$con else db
+  if (any(class(table) == 'ident_q')) {
+    table <- unlist(strsplit(table, '.', fixed = TRUE))
+  }
+  DBI::dbExistsTable(con, table)
+}
+
 #' Like compute(), but insure the target doesn't exist
 #' @md
 #'
@@ -131,11 +151,11 @@ append_sum <- function(cur, ...) {
 #'
 #' @return A [dplyr::tbl()] resulting from [dplyr::compute()].
 compute_new <- function(tblx,
-                        name = paste0(sample(letters, n, replace = TRUE),
+                        name = paste0(sample(letters, 12, replace = TRUE),
                                       collapse = ""),
                         ...) {
     con <- if (inherits(tblx$src, 'src_dbi')) tblx$src$con else tblx$src
-    dplyr::db_drop_table(con, name, force = TRUE)
+    if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
     dplyr::compute(tblx, name = name, ...)
 }
 
