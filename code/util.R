@@ -52,12 +52,13 @@ results_tbl <-
 #' It the name passed in is already the result of a call to
 #' [dbplyr::in_schema()], then no further modification is made.
 #'
-#' @param name The name of the table
+#' @param name The name of the table.  Defaults to a random string.
 #' @param temp Logical indicating whether the table is temporary.
 #'     Defaults to the negation of `config(retain_intermed)`.
 #'
 #' @return A [dplyr::tbl()]] pointing to the table
-intermed_name <- function(name,
+intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
+                                        collapse = ""),
                           temporary = ! config('retain_intermediates')) {
   if ( ! temporary  & ! is.na(config('result_schema')) &
        ! any(class(name) == 'ident_q') )
