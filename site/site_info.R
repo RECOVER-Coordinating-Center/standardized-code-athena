@@ -5,8 +5,6 @@
 #' Please edit information as noted in lines beginning with `#>`
 #' below.
 
-if (!exists('req_env')) req_env <- new.env(parent = emptyenv())
-
 #> Please alter to reflect your site name, one of 'DCC', 'BCH', or 'CCHMC'
 config('site', 'DCC')
 
