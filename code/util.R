@@ -6,7 +6,7 @@
     name <- dbplyr::in_schema(config(schema_tag),
                               DBI::dbQuoteIdentifier(con, name))
   }
-  
+
   tbl(db, name)
 }
 
@@ -54,8 +54,9 @@ results_tbl <-
 #'     Defaults to the negation of `config(retain_intermed)`.
 #'
 #' @return A [dplyr::tbl()]] pointing to the table
-intermed_name <- function(name, temp = ! config('retain_intermediates')) {
-    if ( ! temp  & ! is.na(config('result_schema')) )
+intermed_name <- function(name,
+                          temporary = ! config('retain_intermediates')) {
+    if ( ! temporary  & ! is.na(config('result_schema')) )
         dbplyr::in_schema(config('result_schema'), name)
     else name
 }
@@ -76,7 +77,7 @@ pers_ct <- function(rs) {
 
 #' Create a new tibble for results and progress info
 #' @md
-#' 
+#'
 #' This function creates a [tibble::tibble()] with the information
 #' passed to it, plus three additional columns: `site`, which is the
 #' name of the current site from `site_info.R`, `stamp`, which
@@ -97,7 +98,7 @@ init_sum <- function(...)
 
 #' Add rows to a summary tibble
 #' @md
-#' 
+#'
 #' This function adds rows to an existing tibble, filling in values
 #' for the three extra columns created by [init_sum()].
 #'
@@ -115,7 +116,7 @@ append_sum <- function(cur, ...) {
 
 #' Like compute(), but insure the target doesn't exist
 #' @md
-#' 
+#'
 #' One of the limitations of [dplyr::compute()] as applied to database
 #' tables is that it does not support the `overwrite` parameter, so
 #' calls are not idempotent: if the target table already exists, an
