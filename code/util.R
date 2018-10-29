@@ -152,6 +152,9 @@ db_exists_table <- function(db, table) {
 #'
 #' @param tblx The [dplyr::tbl()] expression to compute
 #' @param name The name to give the table
+#' @param temporary A Boolean indicator of whether the table should be
+#'   temporary.  Defaults to the opposite sense of
+#'   `config('retain_intermediates)`.
 #' @param ... Other arguments passed to [dplyr::compute()]
 #'
 #' @return A [dplyr::tbl()] resulting from [dplyr::compute()].
