@@ -4,7 +4,7 @@
 #' @md-
 #'
 #' This function uses the codeset name to build a path to a CSV file
-#' in the data request package containing the codeset data.  It
+#' in the data request package containing the codeset data.  The default
 #' expects the file to be in the `specs` directory, to have a header,
 #' and to contain four columns:
 #'
@@ -14,15 +14,18 @@
 #'  * vocabulary_id - string
 #'
 #' @param name The name of the codeset.  Typically just the file name
-#'     without `.csv` suffix, but if for some reason you've expanded
-#'     the directory tree under `specs`, you may prefix it with
-#'     subdirectories.
+#'   without `.csv` suffix, but if for some reason you've expanded the
+#'   directory tree under `specs`, you may prefix it with
+#'   subdirectories.
+#' @param col_types A column specification compatible with
+#'   [readr::read_csv()].  Defaults to `'iccc'`
 #'
 #' @return A [tibble::tibble()] contanining the codeset
-read_codeset <- function(name) {
+read_codeset <- function(name
+                         col_types = 'iccc') {
     path <- file.path(config('base_dir'), config('subdirs')$spec_dir,
                       paste0(name, '.csv'))
-    read_csv(path, col_names = TRUE, col_types = 'iccc')
+    read_csv(path, col_names = TRUE, col_types = col_types)
 }
 
 #' Create a db table with a codeset as per the query
