@@ -7,7 +7,7 @@
 .env_cleanup <- function() {
   dm <- config('ora_drop_me')
   if (length(dm) == 0) return(invisible(TRUE))
-  
+
   db <- config('db_src')
   con <- if (inherits(db, 'src_dbi')) db$con else db
   vapply(unique(dm),
@@ -17,18 +17,34 @@
                                           DBI::dbQuoteIdentifier(con,t))),
                     error = function(e) { message(t, ' - ', e); 0L }),
          FUN.VALUE = 0L)
+
+  if ( ! is.null(config('execution_mode')) &&
+         config('execution_mode') == 'production' ) {
+    sink()
+    sink(type = 'message')
+  }
+
   invisible(TRUE)
 }
 
 
 .env_setup <- function() {
-  
+
+  if ( ! is.null(config('execution_mode')) &&
+         config('execution_mode') == 'production' ) {
+    logf <- file(file.path(base_dir,
+                           config('subdirs')$result_dir,
+                           paste0(config('site'), '.log')), open = 'wt')
+    sink(logf, type = 'output')
+    sink(logf, type = 'message')
+  }
+
   if (! any(class(config('db_src')) == 'OraConnection'))
     return(invisible(TRUE))
-  
+
   # List of Oracle "temp" tables that need to be dropped
   config('ora_drop_me', character(0))
-  
+
   assignInNamespace('db_save_query.DBIConnection',
                     function (con, sql, name, temporary = TRUE, ...) {
                       if (temporary) {
@@ -50,7 +66,7 @@
                       DBI::dbExecute(con, tt_sql)
                       name
                     }, ns = 'dbplyr')
-  
+
   assignInNamespace('db_begin.DBIConnection',
                     function (con, ...) {
                       if (any(class(con) == 'OraConnection'))
@@ -58,7 +74,7 @@
                       else
                         dbBegin(con)
                     }, ns = 'dbplyr')
-  
+
   assignInNamespace('db_drop_table.OraConnection',
                     function(con, tabname, force = FALSE, ...) {
                       schema <- NULL
@@ -98,7 +114,7 @@
                       }
                       else 0
                     }, ns = 'dbplyr')
-  
+
   assignInNamespace('db_write_table.DBIConnection',
                     function(con, tabname, types, values, temporary = TRUE, ...) {
                       if (any(class(con) == 'OraConnection')) {
@@ -118,19 +134,19 @@
                                           value = values, field.types = types,
                                           temporary = temporary, row.names = FALSE, ...)
                       }
-                      else 
+                      else
                         DBI::dbWriteTable(con,
                                           name = dbplyr::dbi_quote(dbplyr::as.sql(tabname), con),
                                           value = values, field.types = types,
                                           temporary = temporary, row.names = FALSE, ...)
                       tabname
                     }, ns = 'dbplyr')
-  
+
   assignInNamespace('db_create_index.DBIConnection',
                     function(con, tabname, columns, name = NULL,
                              unique = FALSE, ...) {
                       assertthat::assert_that(is_string(tabname), is.character(columns))
-                      
+
                       name <- name %||%
                         gsub('[^A-Za-z0-9_]+', '',
                              paste0(c(tabname, columns), collapse = "_"))
@@ -150,10 +166,10 @@
                         dbplyr::as.sql(name),
                         " ON ", dbplyr::as.sql(tabname), " ", fields,
                         con = con)
-                      
+
                       dbExecute(con, sql)
                     }, ns = 'dbplyr')
-  
+
   assignInNamespace('in_schema',
                     function(schema, table) {
                       ei <- function(x)
@@ -163,6 +179,6 @@
                         dbplyr::escape(dbplyr::ident(x))
                       dbplyr::ident_q(paste0(ei(schema), '.', ei(table)))
                     }, ns = 'dbplyr')
-  
+
   invisible(TRUE)
 }
