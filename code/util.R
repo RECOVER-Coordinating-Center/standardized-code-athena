@@ -170,6 +170,40 @@ compute_new <- function(tblx,
     dplyr::compute(tblx, name = name, temporary = temporary, ...)
 }
 
+#' Add or replace one ID column with another
+#'
+#' This function takes a crosswalk between the values in a specific
+#' column of a tbl and a new value, and either adds a column with the
+#' new values or replaces the old values with the new.  It is intended
+#' for use replacing an ID that should be redacted out of the data
+#' with a lower-risk ID.
+#'
+#' @param data The tbl containing the data
+#' @param idcol The name of the column containing the ID to join.
+#'   Defaults to the name of data suffixed by `_id`
+#' @param xwalk The tbl containing crosswalk between idcol and new
+#'   values.  Defaults to using a sequence of integers.
+#' @param replace  If TRUE, replace the contents of idcol with the
+#'   first non-idcol column of xwalk.  If FALSE, leave the original
+#'   idcol in place.  Defaults to FALSE.
+#'
+#' @return The tbl with augmented or replaced IDs
+new_id <- function(data,
+                   idcol = paste0(deparse(substitute(data)), '_id'),
+                   xwalk = select_at(data, vars(idcol)) %>%
+                     mutate(seq_id = row_number()),
+                   replace = FALSE) {
+
+  xform <- data %>% left_join(xwalk, by = idcol)
+  if (replace) {
+    newcol <- grep(idcol, tbl_vars(xwalk),
+                   invert = TRUE, value = TRUE, fixed = TRUE)[1]
+    xform <- xform %>% select(-one_of(idcol)) %>%
+      rename_at(vars(newcol), function (x) { idcol })
+  }
+  xform
+}
+
 #' Write contents of tbl to a CSV file
 #' @md
 #'
