@@ -165,7 +165,75 @@ compute_new <- function(tblx,
                         ...) {
     con <- if (inherits(tblx$src, 'src_dbi')) tblx$src$con else tblx$src
     if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
+    name <- gsub('\\s+','_', name, perl = TRUE)
     if (! temporary ) name <- intermed_name(name, temporary)
     dplyr::compute(tblx, name = name, temporary = temporary, ...)
 }
 
+#' Write contents of tbl to a CSV file
+#' @md
+#'
+#' Thnk twice before calling this directly: you probably want
+#' output_tbl() instead.
+#'
+#' @param data The tbl to write.  It will be collect()ed if necessary.
+#' @param name The name (only) of the file to be written.  An
+#'   extension of `.csv` is automatically added.  Defaults to the name of `data`.
+#' @param local If TRUE, write to the local output directory rather
+#'   than the results directory.  Defaults to FALSE.
+#'
+#' @return The (collected) tbl
+.output_csv <- function(data, name = NA, local = FALSE) {
+  if (is.na(name)) name <- quo_name(enquo(data))
+  dirs <- config('subdirs')
+  collect(x) %>%
+    write_csv(file.path(config('base_dir'),
+                        ifelse(local, dirs$local_dir, dirs$result_dir),
+                        paste0(name, '.csv')))
+}
+
+#' Output contents of a tbl
+#' @md
+#'
+#' Write the contents of a tbl to either a CSV file in the appropriate
+#' results directory, or to the database, for future reference.
+#'
+#' @param data The tbl to write.
+#' @param name The name (only) of the ouptut.  Defaults to the name of
+#'   `data`.
+#' @param file An indicator of whether the data should be written out
+#'   as a CSV file.  If it is NA, no file will be written.
+#'   If it is the string `local`, a CSV file will be written in the
+#'   local output directory.  If it has any other value, a CSV file
+#'   will be written in the results output directory.  Defaults to NA.
+#' @param db A Boolean indicator of whether the data should be written
+#'   to a results table in the database.  Defaults to FALSE.
+#' @param ... Additional arguments passed to the database table
+#'   creation function.
+#'
+#' @return The result of the operation, typically a copy of data,
+#'   possibly collect()ed.
+output_tbl <- function(data, name = NA, file = FALSE, db = FALSE, ...) {
+  if (is.na(name)) name <- quo_name(enquo(data))
+
+  if ( !is.na(file)) {
+    local <- if (file == 'local') TRUE else FALSE
+    rslt <- .output_csv(data, name, local)
+  }
+
+  if (db) {
+    if (same_src(config('db_src'), data$src)) {
+      rslt <- compute_new(data,
+                          intermed_name(name, temporary = FALSE),
+                          temporary = FALSE, ...)
+    }
+    else {
+      rslt <- copy_to(config('db_src'), collect(data),
+                      intermed_name(name, temporary = FALSE),
+                      temporary = FALSE,
+                      overwrite = TRUE, ...)
+    }
+  }
+
+  invisible(rslt)
+}
