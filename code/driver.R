@@ -36,6 +36,11 @@ suppressPackageStartupMessages(library(methods))
     .env_setup()
     on.exit(.env_cleanup())
 
+    for (def in c('retain_intermediates', 'results_schema')) {
+      if (is.na(config(def)))
+        config(def, config(paste0('default_', def)))
+    }
+
     base_dir
 }
 
@@ -90,13 +95,7 @@ suppressPackageStartupMessages(library(methods))
 #' 
 
 run_request <- function(base_dir,
-                        site_info = file.path(base_dir, 'site', 'site_info.R'),
-                        retain_intermediates = FALSE,
-                        results_schema = NA) {
+                        site_info = file.path(base_dir, 'site', 'site_info.R')) {
     base_dir <- .load(base_dir, site_info)
-    config('base_dir', base_dir)
-
-    config('retain_intermediates', retain_intermediates)
-    config('results_schema', results_schema)
     .run(base_dir)
 }
