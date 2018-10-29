@@ -35,6 +35,9 @@ suppressPackageStartupMessages(library(methods))
     source(file.path(here, config('subdirs')$code_dir, 'util.R'))
     source(file.path(here, config('subdirs')$code_dir, 'codesets.R'))
     source(file.path(here, config('subdirs')$code_dir, 'cohorts.R'))
+    for (f in list.files(file.path(here, config('subdirs')$code_dir),
+                         'cohort_*.R', full.names = TRUE))
+      source(f)
 
     .env_setup()
     on.exit(.env_cleanup())
