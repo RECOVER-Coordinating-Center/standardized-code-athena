@@ -32,6 +32,9 @@ read_codeset <- function(name) {
 #' intermediate table in the database with the contents.  The table is
 #' indexed on `concept_id`.
 #'
+#' Once a codeset is loaded, it is cached by name, and future calls to
+#' load_codeset() with the same name will return the cached table.
+#'
 #' @param name The name of the codeset
 #' @param table_name An optional name for the table, if you want it to
 #'     differ from `name`.  Defaults to `name`.
@@ -42,32 +45,18 @@ read_codeset <- function(name) {
 load_codeset <- function(name,
                          table_name = name,
                          db = config('db_src')) {
-    copy_to(db,
-            read_codeset(name),
-            name = intermed_name(table_name),
-            temporary = ! config('retain_intermediates'),
-            overwrite = TRUE,
-            indexes = list('concept_id'))
+
+  if (is.null(config('_codesets'))) config('_codesets', list())
+  cache <- config('_codesets')
+  if (! is.null(cache[[name]])) return(cache[[name]])
+
+  codes <- read_codeset(name)
+  copy_to(db,
+          read_codeset(name),
+          name = intermed_name(table_name),
+          temporary = ! config('retain_intermediates'),
+          overwrite = TRUE,
+          indexes = list('concept_id'))
+  cache[[name]] <- codes
+  codes
 }
-
-#' codeset_1 contains any codeset relevant to the study.
-#' @md
-#' 
-#' @return A [dplyr::tbl()] in `db` containing the concepts
-codeset_1 <- function() load_codeset('codeset_1')
-
-
-#'
-#' codeset_2 contains any codeset relevant to the study.
-#' 
-#'
-#' @return A [dplyr::tbl()] in `db` containing the concepts
-codeset_2 <- function() load_codeset('codeset_2')
-
-
-#' 
-#' codeset_3 contains any codeset relevant to the study 
-#' 
-#' @return A [dplyr::tbl()] in `db` containing the concepts
-codeset_3 <- function() load_codeset('codeset_3')
-
