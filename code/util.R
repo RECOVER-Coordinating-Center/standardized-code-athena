@@ -60,9 +60,9 @@ results_tbl <-
 intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                                         collapse = ""),
                           temporary = ! config('retain_intermediates')) {
-  if ( ! temporary  & ! is.na(config('result_schema')) &
+  if ( ! temporary  & ! is.na(config('results_schema')) &
        ! any(class(name) == 'ident_q') )
-        dbplyr::in_schema(config('result_schema'), name)
+        dbplyr::in_schema(config('results_schema'), name)
     else name
 }
 
