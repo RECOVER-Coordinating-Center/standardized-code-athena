@@ -53,6 +53,8 @@ if (base_dir == '/path/to/this/request')
             }
         }
 
+source(file.path(base_dir, 'code', 'config.R'))
+config('base_dir', base_dir)
 
 #' Local database configuration information
 #' @md
@@ -63,7 +65,7 @@ if (base_dir == '/path/to/this/request')
 #' a single copy located elsewhere for multiple data requests.  You
 #' can also choose to edit or copy over the version provided with the
 #' request package.
-site_info <- file.path(base_dir, 'site', 'site_info.R')
+config('site_info', file.path(base_dir, 'site', 'site_info.R'))
 
 #' Request-specific retention of intermediate tables
 #' @md
@@ -90,4 +92,4 @@ config('results_schema', NA)
 source(file.path(base_dir, 'code', 'driver.R'))
 
 if ( is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) )
-    run_request(base_dir, site_info, retain_intermediates, results_schema)
+    run_request(base_dir, site_info)
