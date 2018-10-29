@@ -65,22 +65,20 @@ if (base_dir == '/path/to/this/request')
 #' request package.
 site_info <- file.path(base_dir, 'site', 'site_info.R')
 
-#' Whether or not to keep intermediate tables
-#' @md
-#' 
-#' This Boolean value determines whether tables holding codesets
-#' or intermediate steps are retained after execution completes.  If
-#' `FALSE`, they are created as temporary tables.
-retain_intermediates <- FALSE
-
-#' Results schema
+#' Request-specific retention of intermediate tables
 #' @md
 #'
-#' If you set the prior variable to retain intermediate tables, and
-#' you want them to be written to a specific schema, provide the name
-#' here.  If it is `NA`, no schema qualifier for table names is
-#' used.
-results_schema <- NA
+#' This Boolean value can be used to override the `default_retain_intermediates`
+#' setting from site_info.R.  If it is NA, the default is not overridden.
+config('retain_intermediates', NA)
+
+#' Request-specific results schema
+#' @md
+#'
+#' Specific schema to which you want intermediate tables to be written
+#' during processing of the request.
+#' If it is `NA`, the default value from site_info.R is used.
+config('results_schema', NA)
 
 #################################################################
 #

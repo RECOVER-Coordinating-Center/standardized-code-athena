@@ -26,6 +26,32 @@ config('cdm_schema', 'dcc_pedsnet')
 #> If `NA`, no schema qualifier is added.
 config('vocabulary_schema', 'vocabulary')
 
+#' Schema in which to create intermediate and results tables
+#' @md
+#'
+#' This value determines whether a schema name is added to names of
+#' tables holding intermediate or final results.  If it is `NA`, no
+#' explicit schema is used, and tables are created wherever the DBMS
+#' places them.
+config('default_results_schema', NA)
+
+#' Whether or not to keep intermediate tables
+#' @md
+#'
+#' This Boolean value determines whether tables holding codesets
+#' or intermediate steps are retained after execution completes.  If
+#' `FALSE`, they are created as temporary tables.
+config('default_retain_intermediates', TRUE)
+
+#' Execution mode
+#' @md
+#'
+#' The intended execution mode for the reuqest.  Recognized values are:
+#'
+#' * `production` - Intended for results generation and distribution.
+#' * `development` - Development still in progress
+config('execution_mode', 'development')
+
 #> Names of standard tables used in queries.  Please edit only the
 #> right-hand side of each assignment.  Table names must be lower-case.
 config('table_names',
