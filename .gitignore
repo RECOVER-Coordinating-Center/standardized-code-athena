@@ -5,8 +5,9 @@
 .Rdata
 .DS_Store
 .DS_STore?  
-results/**/*.csv
-results/**/*.log
+**/results/**/*.csv
+**/results/**/*.log
+**/local/**
 *.zip
 *.nb.html
 *.pdf
