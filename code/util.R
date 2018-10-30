@@ -10,8 +10,6 @@
   tbl(db, name)
 }
 
-
-
 #' Connect to a CDM data table
 #' @md
 #'
@@ -22,7 +20,6 @@
 cdm_tbl <-
   function(name, db = config('db_src'))
     .qual_tbl(config('table_names')[[name]], db, 'cdm_schema')
-
 
 #' Connect to a CDM vocabulary table
 #' @md
@@ -91,63 +88,9 @@ temp_name <- function(name = NA) {
 #' @param name The name of the table.  Defaults to a random string.
 #'
 #' @return The resultant name
-result_name <- function(name = NA) {
+results_name <- function(name = NA) {
   if (is.na(name)) intermed_name(temporary = FALSE)
   else intermed_name(name, temporary = FALSE)
-}
-
-
-#' Count unique persons in a resultset. This will be used as one of the outputs
-#' for `append_sum` functions in the driver file.
-#' @md
-#'
-#' @param rset The [dplyr::tbl()] describing the resultset
-#'
-#' @return The number of distinct persons (`person_id`s)
-pers_ct <- function(rs) {
-  ct <- rs %>%
-    summarise(pers_ct = n_distinct(person_id)) %>%
-    collect()
-  as.data.frame(ct)[['pers_ct']]
-}
-
-#' Create a new tibble for results and progress info
-#' @md
-#'
-#' This function creates a [tibble::tibble()] with the information
-#' passed to it, plus three additional columns: `site`, which is the
-#' name of the current site from `site_info.R`, `stamp`, which
-#' contains the ISO-8601 current time, and `used`, which contains a
-#' summary of CPU utilization to this point.
-#'
-#' Additional rows can be added to this structure by [append_sum()].
-#'
-#' @param ... Name-value pairs to be added to the tibble
-#'
-#' @return A tibble as described above
-init_sum <- function(...)
-    tibble(!!! dots_list(...),
-           site = config('site'),
-           stamp = Sys.time(),
-           used = paste(proc.time(), collapse = ';'))
-
-
-#' Add rows to a summary tibble
-#' @md
-#'
-#' This function adds rows to an existing tibble, filling in values
-#' for the three extra columns created by [init_sum()].
-#'
-#' @param cur The [tibble::tibble()] to which to add
-#' @param ... Additional name-value pairs to add
-#'
-#' @return The augmented [tibble::tibble()]
-append_sum <- function(cur, ...) {
-    dplyr::union(tibble(!!! dots_list(...),
-                        site = config('site'),
-                        stamp = Sys.time(),
-                        used = paste(proc.time(), collapse = ';')),
-                 cur)
 }
 
 #' Test whether a table exists in a database, schema-aware
@@ -201,6 +144,58 @@ compute_new <- function(tblx,
     dplyr::compute(tblx, name = name, temporary = temporary, ...)
 }
 
+#' Create a new tibble for results and progress info
+#' @md
+#'
+#' This function creates a [tibble::tibble()] with the information
+#' passed to it, plus three additional columns: `site`, which is the
+#' name of the current site from `site_info.R`, `stamp`, which
+#' contains the ISO-8601 current time, and `used`, which contains a
+#' summary of CPU utilization to this point.
+#'
+#' Additional rows can be added to this structure by [append_sum()].
+#'
+#' @param ... Name-value pairs to be added to the tibble
+#'
+#' @return A tibble as described above
+init_sum <- function(...)
+    tibble(!!! dots_list(...),
+           site = config('site'),
+           stamp = Sys.time(),
+           used = paste(proc.time(), collapse = ';'))
+
+#' Add rows to a summary tibble
+#' @md
+#'
+#' This function adds rows to an existing tibble, filling in values
+#' for the three extra columns created by [init_sum()].
+#'
+#' @param cur The [tibble::tibble()] to which to add
+#' @param ... Additional name-value pairs to add
+#'
+#' @return The augmented [tibble::tibble()]
+append_sum <- function(cur, ...) {
+    dplyr::union(tibble(!!! dots_list(...),
+                        site = config('site'),
+                        stamp = Sys.time(),
+                        used = paste(proc.time(), collapse = ';')),
+                 cur)
+}
+
+#' Count unique persons in a resultset. This will be used as one of the outputs
+#' for `append_sum` functions in the driver file.
+#' @md
+#'
+#' @param rset The [dplyr::tbl()] describing the resultset
+#'
+#' @return The number of distinct persons (`person_id`s)
+pers_ct <- function(rs) {
+  ct <- rs %>%
+    summarise(pers_ct = n_distinct(person_id)) %>%
+    collect()
+  as.data.frame(ct)[['pers_ct']]
+}
+
 #' Add or replace one ID column with another
 #'
 #' This function takes a crosswalk between the values in a specific
@@ -235,19 +230,6 @@ new_id <- function(data,
   xform
 }
 
-#' Write contents of tbl to a CSV file
-#' @md
-#'
-#' Thnk twice before calling this directly: you probably want
-#' output_tbl() instead.
-#'
-#' @param data The tbl to write.  It will be collect()ed if necessary.
-#' @param name The name (only) of the file to be written.  An
-#'   extension of `.csv` is automatically added.  Defaults to the name of `data`.
-#' @param local If TRUE, write to the local output directory rather
-#'   than the results directory.  Defaults to FALSE.
-#'
-#' @return The (collected) tbl
 .output_csv <- function(data, name = NA, local = FALSE) {
   if (is.na(name)) name <- quo_name(enquo(data))
   dirs <- config('subdirs')
@@ -288,13 +270,12 @@ output_tbl <- function(data, name = NA, file = FALSE, db = FALSE, ...) {
 
   if (db) {
     if (same_src(config('db_src'), data$src)) {
-      rslt <- compute_new(data,
-                          intermed_name(name, temporary = FALSE),
+      rslt <- compute_new(data, results_name(name),
                           temporary = FALSE, ...)
     }
     else {
       rslt <- copy_to(config('db_src'), collect(data),
-                      intermed_name(name, temporary = FALSE),
+                      results_name(name),
                       temporary = FALSE,
                       overwrite = TRUE, ...)
     }
