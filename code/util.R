@@ -49,14 +49,14 @@ results_tbl <-
 #' Construct a (possibly schema-qualified) intermediate result table name
 #' @md
 #'
-#' It the name passed in is already the result of a call to
+#' If the name passed in is already the result of a call to
 #' [dbplyr::in_schema()], then no further modification is made.
 #'
 #' @param name The name of the table.  Defaults to a random string.
-#' @param temp Logical indicating whether the table is temporary.
+#' @param temporary Logical indicating whether the table is temporary.
 #'     Defaults to the negation of `config(retain_intermed)`.
 #'
-#' @return A [dplyr::tbl()]] pointing to the table
+#' @return The resultant name
 intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                                         collapse = ""),
                           temporary = ! config('retain_intermediates')) {
@@ -65,6 +65,37 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
         dbplyr::in_schema(config('results_schema'), name)
     else name
 }
+
+#' Construct a name suitable for a temporary file
+#' @md
+#'
+#' This is a convenience function that performs essentially the same
+#' task as [intermed_name()], except that the returned name is always
+#' intended for a temporary table.
+#'
+#' @param name The name of the table.  Defaults to a random string.
+#'
+#' @return The resultant name
+temp_name <- function(name = NA) {
+  if (is.na(name)) intermed_name(temporary = TRUE)
+  else intermed_name(name, temporary = TRUE)
+}
+
+#' Construct a name suitable for a permanent file
+#' @md
+#'
+#' This is a convenience function that performs essentially the same
+#' task as [intermed_name()], except that the returned name is always
+#' intended for a persistnet (non-temporary) table.
+#'
+#' @param name The name of the table.  Defaults to a random string.
+#'
+#' @return The resultant name
+result_name <- function(name = NA) {
+  if (is.na(name)) intermed_name(temporary = FALSE)
+  else intermed_name(name, temporary = FALSE)
+}
+
 
 #' Count unique persons in a resultset. This will be used as one of the outputs
 #' for `append_sum` functions in the driver file.
