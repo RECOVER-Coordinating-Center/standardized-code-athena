@@ -256,27 +256,27 @@ gen_xwalk <- function(input, id_col, rep_col = 'seq_id') {
 #' with a lower-risk ID.
 #'
 #' @param data The tbl containing the data
-#' @param idcol The name of the column containing the ID to join.
+#' @param id_col The name of the column containing the ID to join.
 #'   Defaults to the name of data suffixed by `_id`
-#' @param xwalk The tbl containing crosswalk between idcol and new
+#' @param xwalk The tbl containing crosswalk between id_col and new
 #'   values.  Defaults to using a sequence of integers.
-#' @param replace  If TRUE, replace the contents of idcol with the
-#'   first non-idcol column of xwalk.  If FALSE, leave the original
-#'   idcol in place.  Defaults to FALSE.
+#' @param replace  If TRUE, replace the contents of id_col with the
+#'   first non-id_col column of xwalk.  If FALSE, leave the original
+#'   id_col in place.  Defaults to FALSE.
 #'
 #' @return The tbl with augmented or replaced IDs
 new_id <- function(data,
-                   idcol = paste0(deparse(substitute(data)), '_id'),
-                   xwalk = select_at(data, vars(idcol)) %>%
+                   id_col = paste0(deparse(substitute(data)), '_id'),
+                   xwalk = select_at(data, vars(id_col)) %>%
                      mutate(seq_id = row_number()),
                    replace = FALSE) {
 
-  xform <- data %>% left_join(xwalk, by = idcol)
+  xform <- data %>% left_join(xwalk, by = id_col)
   if (replace) {
-    newcol <- grep(idcol, tbl_vars(xwalk),
+    newcol <- grep(id_col, tbl_vars(xwalk),
                    invert = TRUE, value = TRUE, fixed = TRUE)[1]
-    xform <- xform %>% select(-one_of(idcol)) %>%
-      rename_at(vars(newcol), function (x) { idcol })
+    xform <- xform %>% select(-one_of(id_col)) %>%
+      rename_at(vars(newcol), function (x) { id_col })
   }
   xform
 }
