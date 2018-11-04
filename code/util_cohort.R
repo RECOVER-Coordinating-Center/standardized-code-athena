@@ -112,3 +112,39 @@ new_id <- function(data,
   }
   xform
 }
+
+#' Joins a given tbl to another tbl that contains site
+#' @md
+#'
+#' For multisite databases, a join is done to a linking table to add a
+#' `site` column to the input.  For single-site databases, the value
+#' of `config('site')` is used as the content for the newly-added
+#' `site` column.
+#'
+#' @param f_tbl the tbl that needs to be joined to obtain site
+#'   information.  Must contain id_col.
+#' @param site_tbl the tbl that contains the id_col and `site`
+#'   information.
+#' @param id_col The name of the column on which to join.  Defaults to
+#'   `person_id`.
+#'
+#' @return The contents of `f_tbl` with a field added
+#'   for site.
+add_site <- function(f_tbl,
+                     site_tbl = cdm_tbl('person'),
+                     id_col = 'person_id') {
+  idq <- enquo(id_col)
+
+  if (any(tbl_vars(site_tbl) == 'site')) {
+    f_tbl <- f_tbl %>%
+      left_join(select(site_tbl, !!idq, site), by = id_col,
+                copy = !same_src(site_tbl, f_tbl))
+  }
+  else {
+    val <- config('site')
+    if ( is.null(val) ) val <- 'unknown'
+    f_tbl <- f_tbl %>% mutate('site' = val)
+  }
+  f_tbl
+}
+
