@@ -204,18 +204,23 @@ append_sum <- function(cur, ...) {
                  cur)
 }
 
-#' Count unique persons in a resultset. This will be used as one of the outputs
-#' for `append_sum` functions in the driver file.
+#' Count unique elements in a resultset.
 #' @md
 #'
-#' @param rset The [dplyr::tbl()] describing the resultset
+#' Given a column (e.g. a foreign key), returns as an integer the
+#' number of unique elements in that column. This can be used as one
+#' of the outputs for `append_sum` functions in the driver file.
 #'
-#' @return The number of distinct persons (`person_id`s)
-pers_ct <- function(rs) {
+#' @param rset The [dplyr::tbl()] describing the resultset
+#' @param id_col The name of the column in which to count elements.
+#'   Defaults to `person_id`
+#'
+#' @return The number of distinct values
+distinct_ct <- function(rs, id_col = 'person_id') {
   ct <- rs %>%
-    summarise(pers_ct = n_distinct(person_id)) %>%
+    summarise(dist_ct = n_distinct(!!id_col)) %>%
     collect()
-  as.data.frame(ct)[['pers_ct']]
+  as.data.frame(ct)[['dist_ct']]
 }
 
 #' Add or replace one ID column with another
