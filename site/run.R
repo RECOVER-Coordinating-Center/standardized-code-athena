@@ -92,4 +92,4 @@ config('results_schema', NA)
 source(file.path(base_dir, 'code', 'driver.R'))
 
 if ( is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) )
-    run_request(base_dir, site_info)
+    run_request(base_dir)

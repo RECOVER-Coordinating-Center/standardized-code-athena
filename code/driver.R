@@ -27,10 +27,10 @@ suppressPackageStartupMessages(library(methods))
 #'
 
 
-.load <- function(here, site_info) {
+.load <- function(here) {
     source(file.path(here, 'code', 'config.R'))
     source(file.path(here, 'code', 'req_info.R'))
-    source(site_info)
+    source(config('site_info'))
     source(file.path(here, config('subdirs')$code_dir, 'setup.R'))
     source(file.path(here, config('subdirs')$code_dir, 'util_tbl.R'))
     source(file.path(here, config('subdirs')$code_dir, 'util_cohort.R'))
@@ -112,8 +112,7 @@ suppressPackageStartupMessages(library(methods))
 #'
 #' @return The result of .run()
 
-run_request <- function(base_dir,
-                        site_info = file.path(base_dir, 'site', 'site_info.R')) {
-    base_dir <- .load(base_dir, site_info)
+run_request <- function(base_dir) {
+    base_dir <- .load(base_dir)
     .run(base_dir)
 }
