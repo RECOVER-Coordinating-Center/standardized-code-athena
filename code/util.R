@@ -223,6 +223,30 @@ distinct_ct <- function(rs, id_col = 'person_id') {
   as.data.frame(ct)[['dist_ct']]
 }
 
+#' Create a sequence with which to replace IDs
+#' @md
+#'
+#' This funcion creates an integer sequence matching distinct values
+#' in a column of the input tbl. The resulting crosswalk can be used
+#' to replace IDs in datasets when unique identifiers that are not
+#' stable across datasets are needed.
+#'
+#' @param input A tbl containing the column of interest
+#' @param id_col The name of the column containing IDs to be mapped.
+#' @param rep_col The name of the column to contain the replacement
+#'   integers.  Defaults to `rep_id`.
+#'
+#' @return A two-column tbl containing unique values from id_col and
+#'   replacement values in rep_col
+gen_xwalk <- function(input, id_col, rep_col = 'seq_id') {
+  idq <- quo_name(id_col)
+  req <- quo_name(rep_col)
+
+  input %>% select(!!idq) %>% distinct(!!idq) %>%
+    arrange_at(vars(!!idq)) %>% # Oracle insists on an ordering
+    mutate( !!req := row_number())
+}
+
 #' Add or replace one ID column with another
 #'
 #' This function takes a crosswalk between the values in a specific
