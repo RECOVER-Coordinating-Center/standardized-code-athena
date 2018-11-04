@@ -303,15 +303,20 @@ new_id <- function(data,
 #'   as a CSV file.  If it is NA, no file will be written.
 #'   If it is the string `local`, a CSV file will be written in the
 #'   local output directory.  If it has any other value, a CSV file
-#'   will be written in the results output directory.  Defaults to NA.
+#'   will be written in the results output directory.  Defaults to
+#'   results` if in production mode, NA otherwise.
 #' @param db A Boolean indicator of whether the data should be written
-#'   to a results table in the database.  Defaults to FALSE.
+#'   to a results table in the database.  Defaults to TRUE if `file`
+#'   is NA, and FALSE otherwise.
 #' @param ... Additional arguments passed to the database table
 #'   creation function.
 #'
 #' @return The result of the operation, typically a copy of data,
 #'   possibly collect()ed.
-output_tbl <- function(data, name = NA, file = FALSE, db = FALSE, ...) {
+output_tbl <- function(data, name = NA,
+                       file = ifelse(config('execution_mode') ==
+                                       'production', 'results', NA),
+                       db = ifelse(!is.na(file), FALSE, TRUE), ...) {
   if (is.na(name)) name <- quo_name(enquo(data))
 
   if ( !is.na(file)) {
