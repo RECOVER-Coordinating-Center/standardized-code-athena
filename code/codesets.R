@@ -21,7 +21,7 @@
 #'   [readr::read_csv()].  Defaults to `'iccc'`
 #'
 #' @return A [tibble::tibble()] contanining the codeset
-read_codeset <- function(name
+read_codeset <- function(name,
                          col_types = 'iccc') {
     path <- file.path(config('base_dir'), config('subdirs')$spec_dir,
                       paste0(name, '.csv'))
