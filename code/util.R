@@ -123,7 +123,14 @@ results_name <- function(name = NA) {
 db_exists_table <- function(db, table) {
   con <- if (inherits(db, 'src_dbi')) db$con else db
   if (any(class(table) == 'ident_q')) {
-    table <- unlist(strsplit(table, '.', fixed = TRUE))
+    elts <- gsub('"', '', unlist(strsplit(table, '.', fixed = TRUE)))
+    if (any(grepl('ora', class(con), ignore.case = TRUE))) {
+      elts <- rev(elts)
+      return(DBI::dbExistsTable(con, elts[1], schema = elts[2]))
+    }
+    else {
+      table <- elts
+    }
   }
   DBI::dbExistsTable(con, table)
 }
