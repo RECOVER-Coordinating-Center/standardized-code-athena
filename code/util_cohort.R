@@ -148,3 +148,52 @@ add_site <- function(f_tbl,
   f_tbl
 }
 
+#' Find facts occurring within a specified time before an index date
+#' @md
+#'
+#' This function filters a tbl for events starting within a certain
+#' number of days prior to an index date for a patient.
+#'
+#' @param data The data table.
+#' @param index_tbl A tbl containing (at least) `person_id` and an
+#'   index date column against which data will be filtered.
+#' @param event_date_col The name of the column containing the event
+#'   date of interest.  Defaults to the name of the data tbl, less any
+#'   suffix `_occurrence`, with `_start_date` added.
+#' @param index_date_col The name of the column in index_tbl
+#'   containing the index date.  Defaults to `cohort_start_date` for
+#'   compatibility with Atlas output.
+#' @param lookback The lookback interval in days. Defaults to 365.
+#'
+#' @return A tbl containing filtered rows of interest (i.e. that match
+#'   on `person_id` and fall within the lookback interval)
+lookback_facts <-
+  function(data,
+           index_tbl,
+           event_date_col = NA,
+           index_date_col = 'cohort_start_date',
+           lookback = 365L) {
+
+    idq <- enquo(index_date_col)
+
+    if (is.na(event_date_col)) {
+      dname <- NA
+      if (any(class(data) == 'tbl_dbi')) {
+        dname  <- dbplyr:::tbl_desc(data)
+        dname <- unlist(regmatches(dname,
+                                   regexec('(\\w+)>', dname, perl = TRUE)))[2]
+      }
+      if (is.na(dname)) dname <- deparse(substitute(data))
+      event_date_col <-
+        paste0(sub('_occurrence$', '', dname, ignore.case = TRUE),
+               '_start_date')
+    }
+    data %>%
+      inner_join(select(index_tbl, person_id, !!idq),
+                 by = 'person_id',
+                 copy = ! same_src(data, index_tbl)) %>%
+      filter(between(dbplyr::ident(index_date_col) -
+                       dbplyr::ident(event_date_col),
+                     0L, lookback)) %>%
+      select(-!!idq)
+}
