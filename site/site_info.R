@@ -14,10 +14,14 @@ config('site', 'DCC')
 #' and any result schemata needed.  The connection may be either a
 #' dplyr-style src_foo() object (as below), or a DBI-style dbConnect()
 #' object (e.g. dbConnect(MySQL(), host = ...)).
-config('db_src',
-       { require(Argos);
-         src_argos('argos_pedsnet_v26')
-       })
+config('db_src', {
+  # If using Oracle, the following are required before loading
+  # ROracle, if these are not set in the global environment:
+  # Sys.setenv(TZ=Sys.timezone())
+  # Sys.setenv(ORA_TZ=Sys.timezone())
+  require(Argos);
+  src_argos('argos_pedsnet_v26')
+})
 
 #' Name of the schema, if any, to be prepended to CDM fact table names.
 #' @md
