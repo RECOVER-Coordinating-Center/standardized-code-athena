@@ -179,33 +179,46 @@ add_site <- function(f_tbl,
 #'
 #' @return A tbl containing filtered rows of interest (i.e. that match
 #'   on `person_id` and fall within the lookback interval)
-lookback_facts <-
-  function(data,
-           index_tbl,
-           event_date_col = NA,
-           index_date_col = 'cohort_start_date',
-           lookback = 365L) {
+lookback_facts <- function(data,
+                           index_tbl,
+                           event_date_col = NA,
+                           index_date_col = 'cohort_start_date',
+                           lookback = 365L) {
 
-    idq <- enquo(index_date_col)
+  idq <- enquo(index_date_col)
 
-    if (is.na(event_date_col)) {
-      dname <- NA
-      if (any(class(data) == 'tbl_dbi')) {
-        dname  <- dbplyr:::tbl_desc(data)
-        dname <- unlist(regmatches(dname,
-                                   regexec('(\\w+)>', dname, perl = TRUE)))[2]
-      }
-      if (is.na(dname)) dname <- deparse(substitute(data))
-      event_date_col <-
-        paste0(sub('_occurrence$', '', dname, ignore.case = TRUE),
-               '_start_date')
+  if (is.na(event_date_col)) {
+    dname <- NA
+    if (any(class(data) == 'tbl_dbi')) {
+      dname  <- dbplyr:::tbl_desc(data)
+      dname <- unlist(regmatches(dname,
+                                 regexec('(\\w+)>', dname, perl = TRUE)))[2]
     }
-    data %>%
-      inner_join(select(index_tbl, person_id, !!idq),
-                 by = 'person_id',
-                 copy = ! same_src(data, index_tbl)) %>%
+    if (is.na(dname)) dname <- deparse(substitute(data))
+    event_date_col <-
+      paste0(sub('_occurrence$', '', dname, ignore.case = TRUE),
+             '_start_date')
+  }
+  filt <- data %>%
+    inner_join(select(index_tbl, person_id, !!idq),
+               by = 'person_id',
+               copy = ! same_src(data, index_tbl))
+
+  if (any(class(filt) == 'tbl_sql')) {
+    con <- if (inherits(filt$src, 'src_dbi')) filt$src$con else filt$src
+    filt <- filt %>%
+      filter(between(DBI::dbQuoteIdentifier(con, index_date_col) -
+                       DBI::dbQuoteIdentifier(con, event_date_col),
+                     0L, lookback)) %>%
+      select(-!!idq)
+
+  }
+  else {
+    filt <- filt %>%
       filter(between(dbplyr::ident(index_date_col) -
                        dbplyr::ident(event_date_col),
                      0L, lookback)) %>%
       select(-!!idq)
+  }
+  filt
 }
