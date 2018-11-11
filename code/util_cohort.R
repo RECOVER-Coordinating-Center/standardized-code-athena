@@ -10,13 +10,19 @@
 #' Additional rows can be added to this structure by [append_sum()].
 #'
 #' @param ... Name-value pairs to be added to the tibble
+#' @param set_default A Boolean value which determines whether the
+#'   result is stored as the default event accumulator in
+#'   `config('event_list')`.  Defaults to TRUE.
 #'
 #' @return A tibble as described above
-init_sum <- function(...)
-    tibble(!!! dots_list(...),
-           site = config('site'),
-           stamp = Sys.time(),
-           used = paste(proc.time(), collapse = ';'))
+init_sum <- function(..., set_default = TRUE) {
+  x <- tibble(!!! dots_list(...),
+              site = config('site'),
+              stamp = Sys.time(),
+              used = paste(proc.time(), collapse = ';'))
+  if (set_default) config('event_list', x)
+  x
+}
 
 #' Add rows to a summary tibble
 #' @md
@@ -24,16 +30,22 @@ init_sum <- function(...)
 #' This function adds rows to an existing tibble, filling in values
 #' for the three extra columns created by [init_sum()].
 #'
-#' @param cur The [tibble::tibble()] to which to add
 #' @param ... Additional name-value pairs to add
+#' @param events The tbl in which to accumulate event information.  If
+#'   it is NA (the default), the default event accumulator in
+#'   `config('event_list')` is augmented.  Note that if you wish to
+#'   override the default, you must pass this parameter by name.
 #'
-#' @return The augmented [tibble::tibble()]
-append_sum <- function(cur, ...) {
-    dplyr::union(tibble(!!! dots_list(...),
-                        site = config('site'),
-                        stamp = Sys.time(),
-                        used = paste(proc.time(), collapse = ';')),
-                 cur)
+#' @return The augmented tbl.
+append_sum <- function(..., event_list = NA) {
+  events <- if (is.na(event_list)) config('event_list') else event_list
+  x <- dplyr::union(tibble(!!! dots_list(...),
+                           site = config('site'),
+                           stamp = Sys.time(),
+                           used = paste(proc.time(), collapse = ';')),
+                    events)
+  if (is.na(event_list)) config('event_list', x)
+  x
 }
 
 #' Count unique elements in a resultset.
