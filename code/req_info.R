@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
 
-#' Administrative information about request. 
-#' The first @par@param should remain the same throughout requests. 
-#' Request-specific information should be the second @par@param in 
-#' the config() functions.
-#' 
+#' Administrative information about request.
+#'
+#' The configuration items present in the template should be completed
+#' for all requests.
+#'
 
 config('title',
        'Title of Project')
