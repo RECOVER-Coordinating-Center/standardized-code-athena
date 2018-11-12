@@ -41,7 +41,6 @@ suppressPackageStartupMessages(library(methods))
       source(f)
 
     .env_setup()
-    on.exit(.env_cleanup())
 
     for (def in c('retain_intermediates', 'results_schema')) {
       if (is.na(config(def)))
@@ -114,5 +113,6 @@ suppressPackageStartupMessages(library(methods))
 
 run_request <- function(base_dir) {
     base_dir <- .load(base_dir)
+    on.exit(.env_cleanup())
     .run(base_dir)
 }
