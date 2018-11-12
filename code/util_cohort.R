@@ -11,8 +11,8 @@
 #'
 #' @param ... Name-value pairs to be added to the tibble
 #' @param set_default A Boolean value which determines whether the
-#'   result is stored as the default event accumulator in
-#'   `config('event_list')`.  Defaults to TRUE.
+#'   result is stored as the default event accumulator. Defaults to
+#'   TRUE.
 #'
 #' @return A tibble as described above
 init_sum <- function(..., set_default = TRUE) {
@@ -20,7 +20,7 @@ init_sum <- function(..., set_default = TRUE) {
               site = config('site'),
               stamp = Sys.time(),
               used = paste(proc.time(), collapse = ';'))
-  if (set_default) config('event_list', x)
+  if (set_default) config('_event_list', x)
   x
 }
 
@@ -31,21 +31,40 @@ init_sum <- function(..., set_default = TRUE) {
 #' for the three extra columns created by [init_sum()].
 #'
 #' @param ... Additional name-value pairs to add
-#' @param events The tbl in which to accumulate event information.  If
-#'   it is NA (the default), the default event accumulator in
-#'   `config('event_list')` is augmented.  Note that if you wish to
-#'   override the default, you must pass this parameter by name.
+#' @param event_list The tbl in which to accumulate event information.
+#'   If it is NA (the default), the default event accumulator is
+#'   augmented.  Note that if you wish to override the default, you
+#'   must pass this parameter by name.
 #'
 #' @return The augmented tbl.
 append_sum <- function(..., event_list = NA) {
-  events <- if (is.na(event_list)) config('event_list') else event_list
+  events <- if (is.na(event_list)) config('_event_list') else event_list
   x <- dplyr::union(tibble(!!! dots_list(...),
                            site = config('site'),
                            stamp = Sys.time(),
                            used = paste(proc.time(), collapse = ';')),
                     events)
-  if (is.na(event_list)) config('event_list', x)
+  if (is.na(event_list)) config('_event_list', x)
   x
+}
+
+#' Output summary tbl
+#' @md
+#'
+#' This function writes out the summary data accumulated by
+#' [init_sum()] and [append_sum()].
+#'
+#' @param event_list The tbl in which event information was
+#'   accumulated.  Defaults to the default event accumulator.
+#' @param name The name to give the output file or table.  Defaults to
+#'   the concatenation of `config('site')` and `_steps`.
+#' @param ... Additional arguments passed to [output_tbl()].
+#'
+#' @return The return value of [output_tbl()].
+output_sum <- function(event_list = config('_event_list'),
+                       name = paste0(config('site'), '_steps'),
+                       ...) {
+  output_tbl(event_list, name = name, ...)
 }
 
 #' Count unique elements in a resultset.
