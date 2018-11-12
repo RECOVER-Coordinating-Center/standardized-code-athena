@@ -105,7 +105,7 @@ gen_xwalk <- function(input, id_col, rep_col = 'seq_id') {
   idq <- quo_name(id_col)
   req <- quo_name(rep_col)
 
-  input %>% select(!!idq) %>% distinct(!!idq) %>%
+  input %>% select(!!idq) %>% distinct() %>%
     arrange_at(vars(!!idq)) %>% # Oracle insists on an ordering
     mutate( !!req := row_number())
 }
