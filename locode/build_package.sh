@@ -5,6 +5,17 @@ then
     echo "Please execute from top-level directory"
     exit 1
 fi
+if [[ $(grep '^Provide a summary of the scientific' locode/request_info.Rmd) ]]
+then
+    echo "Please edit request-specific description locode/request_info.Rmd"
+    exit 1
+fi
+if [[ $(grep 'Title of Project' code/req_info.R) ]]
+then
+    echo "Please edit request-specific specifications code/req_info.R"
+    exit 1
+fi
+
 
 name=`basename $PWD`
 
