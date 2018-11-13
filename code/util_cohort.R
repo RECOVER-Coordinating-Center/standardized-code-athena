@@ -80,9 +80,10 @@ output_sum <- function(event_list = config('_event_list'),
 #'
 #' @return The number of distinct values
 distinct_ct <- function(rs, id_col = 'person_id') {
-  ct <- rs %>%
-    summarise(dist_ct = n_distinct(!!id_col)) %>%
-    collect()
+  # A little clunky, but n_distinct() doesn't support quoting of
+  # identifiers to the DBMS
+  ct <- rs %>% select(id_col) %>% distinct() %>%
+    summarize(dist_ct = n()) %>% collect()
   as.data.frame(ct)[['dist_ct']]
 }
 
