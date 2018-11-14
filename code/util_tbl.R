@@ -160,9 +160,9 @@ compute_new <- function(tblx,
                         temporary = ! config('retain_intermediates'),
                         ...) {
     con <- if (inherits(tblx$src, 'src_dbi')) tblx$src$con else tblx$src
-    if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
     name <- gsub('\\s+','_', name, perl = TRUE)
     if (! temporary ) name <- intermed_name(name, temporary)
+    if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
     dplyr::compute(tblx, name = name, temporary = temporary, ...)
 }
 
