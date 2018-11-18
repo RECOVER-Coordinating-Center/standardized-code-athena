@@ -53,49 +53,43 @@ suppressPackageStartupMessages(library(methods))
     base_dir
 }
 
-#'
-#' If your code, in the `util.R` file, has time stamps to account for,
-#' you should consider where to add those functions somewhere in the
-#' output files in order to calculate computing time.  In this sample,
-#' the two functions (found in the sample `util.R` file) are called
-#' init_sum, to initiate the computation and create a table. The
-#' append_sum adds rows to the table that computes the length of time
-#' it takes for a given computation. In this sample below, these two
-#' functions are started in a `rslt` function that then gets renamed
-#' and called several times, based on the function it is meant to
-#' compute. Every time `rslt` is called, it pulls the existing table,
-#' executes the function, and gets assigned `rslt` again - with the
-#' new time stamp appended to it.In addition to time logging, `rslt`
-#' also includes patient counts every time it is called.
-#'
-#'
-
 .run  <- function(base_dir = config('base_dir')) {
 
-  rslt <- init_sum(cohort = 'Start',
-                   persons = 0)
+  init_sum(cohort = 'Start', persons = 0)
 
   message('Insert message here')
   starter <- first_function(config('db_src')) %>%
     .compute_intermed('')  #if applicable
 
   # counts the number of persons for this part of the query
-  rslt <- append_sum(rslt,
-                     cohort = 'Name of first computation or cohort (if feasibility query)',
-                     persons = pers_ct(starter))
+  append_sum(rslt,
+             cohort = 'Name of first computation or cohort (if feasibility query)',
+             persons = distinct_ct(starter))
 
   next_cohort <- function_call_for_study(starter) %>%
     .other_functions_if_applicable('') # if applicable
-  rslt <- append_sum(rslt,
-                     cohort = 'Name of second computation or cohort (if feasibility query)',
-                     persons = person_ct(next_cohort))
+  append_sum(rslt,
+             cohort = 'Name of second computation or cohort (if feasibility query)',
+             persons = distinct_ct(next_cohort))
 
 
   more_functions_as_needed()
 
-  write_csv(arrange(rslt, stamp),
-            file.path(base_dir,config('subdirs')$result_dir,
-                      paste0('counts_', config('site'), '.csv')))  # if writing to CSV
+
+  # Simple output to CSV
+  output_tbl(starter, name = 'base_cohort', file = TRUE, db = FALSE)
+
+  # Alternatively, replace person_ids and write output
+  pers_xwalk <- gen_xwalk(starter, 'person_id')
+  output_tbl(new_id(starter, 'person_id', pers_xwalk, replace = TRUE),
+             name = 'base_cohort', file = 'result', db = TRUE)
+  output_tbl(new_id(next_cohort, 'person_id', pers_xwalk, replace = TRUE),
+             name = 'next_cohort', file = 'result', db = TRUE)
+  # Don't forget to save the crosswalk
+  output_tbl(pers_xwalk, name = 'person_xwalk', file = 'local', db = TRUE)
+
+  # Write step summary log to CSV and/or database, as determined by configuration
+  output_sum()
 
   invisible(rslt)
 
