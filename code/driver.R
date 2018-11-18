@@ -39,6 +39,9 @@ suppressPackageStartupMessages(library(methods))
     for (fn in list.files(file.path(here, config('subdirs')$code_dir),
                           'cohort_.+\\.R', full.names = TRUE))
       source(fn)
+    for (fn in list.files(file.path(here, config('subdirs')$code_dir),
+                        'analyze_.+\\.R', full.names = TRUE))
+      source(fn)
 
     .env_setup()
 
