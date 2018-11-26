@@ -172,6 +172,14 @@
                       dbExecute(con, sql)
                     }, ns = 'dbplyr')
 
+  # Oracle can obviously produce explain plans, but it requires
+  # outside table setup, so for now we skip it
+  assignInNamespace('db_explain.DBIConnection',
+                    function(con, sql, ...) {
+                      message("explain() not currently implemented for Oracle")
+                      invisible('None')
+                    }, ns = 'dbplyr')
+
   assignInNamespace('in_schema',
                     function(schema, table) {
                       ei <- function(x)
