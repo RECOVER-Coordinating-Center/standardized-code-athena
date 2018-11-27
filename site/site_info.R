@@ -5,7 +5,7 @@
 #' Please edit information as noted below.
 
 #' Please alter to reflect your site name.
-config('site', 'DCC')
+config('site', 'site_name')
 
 #' Code to establish a database connection at your site.
 #' @md
@@ -27,7 +27,7 @@ config('db_src', {
 #' @md
 #'
 #' If `NA`, no schema qualifier is added.
-config('cdm_schema', 'dcc_pedsnet')
+config('cdm_schema', 'pedsnet')
 
 #' Name of the schema, if any, to be prepended to vocabulary tables.
 #' @md
@@ -50,7 +50,7 @@ config('default_results_schema', NA)
 #' This Boolean value determines whether tables holding codesets
 #' or intermediate steps are retained after execution completes.  If
 #' `FALSE`, they are created as temporary tables.
-config('default_retain_intermediates', TRUE)
+config('default_retain_intermediates', FALSE)
 
 #' Execution mode
 #' @md
