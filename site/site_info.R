@@ -18,9 +18,9 @@ config('db_src', {
   # If using Oracle, the following are required before loading
   # ROracle, if these are not set in the global environment:
   # Sys.setenv(TZ=Sys.timezone())
-  # Sys.setenv(ORA_TZ=Sys.timezone())
-  require(Argos);
-  src_argos('argos_pedsnet_v26')
+  # Sys.setenv(ORA_SDTZ=Sys.timezone())
+  # require(Argos);
+  # src_argos('argos_pedsnet')
 })
 
 #' Name of the schema, if any, to be prepended to CDM fact table names.
