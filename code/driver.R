@@ -59,7 +59,7 @@ suppressPackageStartupMessages(library(methods))
 
   message('Insert message here')
   starter <- first_function(config('db_src')) %>%
-    .compute_intermed('')  #if applicable
+    .compute_new()  #if applicable
 
   # counts the number of persons for this part of the query
   append_sum(rslt,
