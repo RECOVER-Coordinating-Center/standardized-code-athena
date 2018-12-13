@@ -210,7 +210,7 @@ output_tbl <- function(data, name = NA,
   }
 
   if (db) {
-    if (exists('src', where = data) &
+    if (exists('src', where = data) &&
           same_src(config('db_src'), data$src)) {
       rslt <- compute_new(data, results_name(name),
                           temporary = FALSE, ...)
