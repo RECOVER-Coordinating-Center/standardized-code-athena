@@ -39,13 +39,17 @@ read_codeset <- function(name,
 #' load_codeset() with the same name will return the cached table.
 #'
 #' @param name The name of the codeset
+#' @param col_types A column specification compatible with
+#'   [readr::read_csv()] to be used when reading the codeset file.
+#'   Defaults to `'iccc'`
 #' @param table_name An optional name for the table, if you want it to
-#'     differ from `name`.  Defaults to `name`.
+#'   differ from `name`.  Defaults to `name`.
 #' @param db A database connection; you will rarely need to change
-#'     this from the default.  Defaults to `config('db_src')`.
+#'   this from the default.  Defaults to `config('db_src')`.
 #'
 #' @return A [dplyr::tbl()] pointing to the table
 load_codeset <- function(name,
+                         col_types = 'iccc',
                          table_name = name,
                          db = config('db_src')) {
 
@@ -55,7 +59,7 @@ load_codeset <- function(name,
 
   codes <-
     copy_to(db,
-            read_codeset(name),
+            read_codeset(name, col_types),
             name = intermed_name(table_name),
             temporary = ! config('retain_intermediates'),
             overwrite = TRUE,
