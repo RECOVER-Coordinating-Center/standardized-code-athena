@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 
 .qual_tbl <- function(name, db, schema_tag) {
+  name_map <- config('table_names')
+  name <- ifelse(hasName(name_map, x), name_map[[name]], name)
   if (! is.na(config(schema_tag))) {
     con <- if (inherits(db, 'src_dbi')) db$con else db
     name <- dbplyr::in_schema(config(schema_tag),
@@ -19,7 +21,7 @@
 #' @return A [dplyr::tbl()]] pointing to the table
 cdm_tbl <-
   function(name, db = config('db_src'))
-    .qual_tbl(config('table_names')[[name]], db, 'cdm_schema')
+    .qual_tbl(name, db, 'cdm_schema')
 
 #' Connect to a CDM vocabulary table
 #' @md
@@ -30,7 +32,7 @@ cdm_tbl <-
 #' @return A [dplyr::tbl()]] pointing to the table
 vocabulary_tbl <-
   function(name, db = config('db_src'))
-    .qual_tbl(config('table_names')[[name]], db, 'vocabulary_schema')
+    .qual_tbl(name, db, 'vocabulary_schema')
 
 #' Connect to a result table
 #' @md
@@ -41,7 +43,7 @@ vocabulary_tbl <-
 #' @return A [dplyr::tbl()]] pointing to the table
 results_tbl <-
   function(name, db = config('db_src'))
-    .qual_tbl(config('table_names')[[name]], db, 'results_schema')
+    .qual_tbl(name, db, 'results_schema')
 
 #' Construct a (possibly schema-qualified) intermediate result table name
 #' @md
