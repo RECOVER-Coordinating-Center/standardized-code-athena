@@ -11,10 +11,10 @@ config('title',
 config('requester_name', 'Name of Requestor')
 config('requester_site', 'Site Name')
 config('cdm', 'cdm_used')
-config('cdm_version', x.x)
-config('enqueued_date', as.Date(''))
+config('cdm_version', 1)
+config('enqueued_date', as.Date('2001-01-01'))
 
-config('req_version', x.x)
+config('req_version', 1)
 
 # In most cases, these assignments should not need to be changed.
 # But if for some reason you have altered the layout of the request
