@@ -165,7 +165,19 @@ compute_new <- function(tblx,
     name <- gsub('\\s+','_', name, perl = TRUE)
     if (! temporary ) name <- intermed_name(name, temporary)
     if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
-    dplyr::compute(tblx, name = name, temporary = temporary, ...)
+    if (config('db_trace')) {
+      show_query(tblx)
+      explain(tblx)
+      message(' -> ', name)
+      start <- Sys.time()
+      message(start)
+    }
+    rslt <- dplyr::compute(tblx, name = name, temporary = temporary, ...)
+    if (config('db_trace')) {
+      end  <- Sys.time()
+      message(end, ' ==> ', format(end - start))
+    }
+    rslt
 }
 
 .output_csv <- function(data, name = NA, local = FALSE) {
@@ -175,6 +187,34 @@ compute_new <- function(tblx,
     write_csv(file.path(config('base_dir'),
                         ifelse(local, dirs$local_dir, dirs$result_dir),
                         paste0(name, '.csv')))
+}
+
+#' Like collect(), but allow for debug output
+#' @md
+#'
+#' This function is a simple wrapper for [dplyr::collect()], but
+#' allows for generation of trace output when running in debug mode.
+#'
+#' @param tblx The [dplyr::tbl()] expression to collect
+#' @param ... Other arguments passed to [dplyr::collect()]
+#'
+#' @return A [dplyr::tbl()] resulting from [dplyr::collect()].
+collect_new <- function(tblx, ...) {
+  if (config('db_trace')) {
+    if (inherits(tblx, 'tbl_sql')) {
+      show_query(tblx)
+      explain(tblx)
+    }
+    message(' -> collect')
+    start <- Sys.time()
+    message(start)
+  }
+  rslt <- collect(tblx)
+  if (config('db_trace')) {
+    end  <- Sys.time()
+    message(end, ' ==> ', format(end - start))
+  }
+  rslt
 }
 
 #' Output contents of a tbl

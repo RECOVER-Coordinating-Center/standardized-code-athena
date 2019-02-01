@@ -88,6 +88,12 @@ config('results_schema', NA)
 #
 #################################################################
 
+#' Request-specific debug output for database operations
+#' @md
+#'
+#' This Boolean value specifies whether the query log should include
+#' detailed information about execution of SQL queries in the database
+config('db_trace', FALSE)
 
 source(file.path(base_dir, 'code', 'driver.R'))
 
