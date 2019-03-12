@@ -22,7 +22,7 @@ name=`basename $PWD`
 Rscript -e 'library(knitr); knit("locode/request_info.Rmd")'
 pandoc -s -o README.pdf request_info.md
 rm -f request_info.md
-zip -r9X "$name".zip README.pdf code local results specs site -x \*/.\* \*/\*~ results/?\*
+zip -r9X "$name".zip README.pdf code local results specs site -x \*/.\* \*/\*~ results/?\* local/?\*
 rm -f README.pdf
 
 mkdir "$name"
