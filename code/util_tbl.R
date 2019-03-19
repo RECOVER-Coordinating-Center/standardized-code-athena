@@ -2,7 +2,7 @@
 
 .qual_tbl <- function(name, db, schema_tag) {
   name_map <- config('table_names')
-  name <- ifelse(hasName(name_map, x), name_map[[name]], name)
+  name <- ifelse(hasName(name_map, name), name_map[[name]], name)
   if (! is.na(config(schema_tag))) {
     con <- if (inherits(db, 'src_dbi')) db$con else db
     name <- dbplyr::in_schema(config(schema_tag),
