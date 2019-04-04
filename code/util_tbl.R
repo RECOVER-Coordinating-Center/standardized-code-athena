@@ -227,12 +227,14 @@ collect_new <- function(tblx, ...) {
 #' @param data The tbl to write.
 #' @param name The name (only) of the ouptut.  Defaults to the name of
 #'   `data`.
+#' @param local A Boolean value indicating whether the data should be
+#'   written to a local-only location, which is not typically returned
+#'   with query results.  Defaults to FALSE.
 #' @param file An indicator of whether the data should be written out
-#'   as a CSV file.  If it is NA, no file will be written.
-#'   If it is the string `local`, a CSV file will be written in the
-#'   local output directory.  If it has any other value, a CSV file
-#'   will be written in the results output directory.  Defaults to
-#'   results` if in production mode, NA otherwise.
+#'   as a CSV file.  If it is NA, no file will be written. If it has
+#'   any other value, a CSV file will be written with that name (with
+#'   a ".csv" suffic appended).  Defaults to results` if in production
+#'   mode, NA otherwise.
 #' @param db A Boolean indicator of whether the data should be written
 #'   to a results table in the database.  Defaults to TRUE if `file`
 #'   is NA, and FALSE otherwise.
@@ -241,14 +243,13 @@ collect_new <- function(tblx, ...) {
 #'
 #' @return The result of the operation, typically a copy of data,
 #'   possibly collect()ed.
-output_tbl <- function(data, name = NA,
+output_tbl <- function(data, name = NA, local = FALSE,
                        file = ifelse(config('execution_mode') ==
                                        'production', 'results', NA),
                        db = ifelse(!is.na(file), FALSE, TRUE), ...) {
   if (is.na(name)) name <- quo_name(enquo(data))
 
   if ( !is.na(file)) {
-    local <- if (file == 'local') TRUE else FALSE
     rslt <- .output_csv(data, name, local)
   }
 

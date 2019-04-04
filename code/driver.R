@@ -86,7 +86,8 @@ suppressPackageStartupMessages(library(methods))
   output_tbl(new_id(next_cohort, 'person_id', pers_xwalk, replace = TRUE),
              name = 'next_cohort', file = 'result', db = TRUE)
   # Don't forget to save the crosswalk
-  output_tbl(pers_xwalk, name = 'person_xwalk', file = 'local', db = TRUE)
+  output_tbl(pers_xwalk, name = 'person_xwalk', file = TRUE,
+             local = TRUE, db = TRUE)
 
   # Write step summary log to CSV and/or database, as determined by configuration
   output_sum()
