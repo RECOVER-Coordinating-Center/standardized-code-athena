@@ -180,14 +180,6 @@ compute_new <- function(tblx,
     rslt
 }
 
-.output_csv <- function(data, name = NA, local = FALSE) {
-  if (is.na(name)) name <- quo_name(enquo(data))
-  dirs <- config('subdirs')
-  collect_new(data) %>%
-    write_csv(file.path(config('base_dir'),
-                        ifelse(local, dirs$local_dir, dirs$result_dir),
-                        paste0(name, '.csv')))
-}
 
 #' Like collect(), but allow for debug output
 #' @md
@@ -215,6 +207,15 @@ collect_new <- function(tblx, ...) {
     message(end, ' ==> ', format(end - start))
   }
   rslt
+}
+
+.output_csv <- function(data, name = NA, local = FALSE) {
+  if (is.na(name)) name <- quo_name(enquo(data))
+  dirs <- config('subdirs')
+  collect_new(data) %>%
+    write_csv(file.path(config('base_dir'),
+                        ifelse(local, dirs$local_dir, dirs$result_dir),
+                        paste0(name, '.csv')))
 }
 
 #' Output contents of a tbl
