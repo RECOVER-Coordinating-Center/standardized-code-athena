@@ -183,7 +183,7 @@ compute_new <- function(tblx,
 .output_csv <- function(data, name = NA, local = FALSE) {
   if (is.na(name)) name <- quo_name(enquo(data))
   dirs <- config('subdirs')
-  collect(data) %>%
+  collect_new(data) %>%
     write_csv(file.path(config('base_dir'),
                         ifelse(local, dirs$local_dir, dirs$result_dir),
                         paste0(name, '.csv')))
@@ -258,7 +258,7 @@ output_tbl <- function(data, name = NA,
                           temporary = FALSE, ...)
     }
     else {
-      rslt <- copy_to(config('db_src'), collect(data),
+      rslt <- copy_to(config('db_src'), collect_new(data),
                       results_name(name),
                       temporary = FALSE,
                       overwrite = TRUE, ...)
