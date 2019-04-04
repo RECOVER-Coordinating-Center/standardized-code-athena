@@ -39,6 +39,24 @@
     sink(logf, type = 'message')
   }
 
+  if (packageVersion('dbplyr') < '1.3.1') {
+    assignInNamespace('arrange.tbl_lazy',
+                      function(.data, ..., .by_group = FALSE) {
+                        dots <- quos(...)
+                        dots <-
+                          dbplyr:::partial_eval(dots,
+                                                vars = dbplyr:::op_vars(.data))
+                        names(dots) <- NULL
+
+                        dbplyr:::add_op_single(
+                          "arrange",
+                          .data,
+                          dots = dots,
+                          args = list(.by_group = .by_group)
+                        )
+                      }, ns = 'dbplyr')
+  }
+
   if (! any(class(config('db_src')) == 'OraConnection'))
     return(invisible(TRUE))
 
