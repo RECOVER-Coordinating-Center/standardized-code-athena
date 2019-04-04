@@ -59,6 +59,18 @@ results_tbl <-
 intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                                         collapse = ""),
                           temporary = ! config('retain_intermediates')) {
+  if ( ! is.na(config('req_tag'))) {
+    if (any(class(name) == 'ident_q') ) {
+      # Best guess - works but relies on stringification of dbplyr::in_schema()
+      parts <- regmatches(name, regexec('(.+)\\.(.+)', name))
+      name <- dbplyr::in_schema(parts[[1]][2],
+                                paste0(parts[[1]][3], config('req_tag'),
+                                       collapse = ''))
+    }
+    else {
+      name <- paste0(name, config('req_tag'), collapse = '')
+    }
+  }
   if ( ! temporary  & ! is.na(config('results_schema')) &
        ! any(class(name) == 'ident_q') )
         dbplyr::in_schema(config('results_schema'), name)
@@ -163,7 +175,7 @@ compute_new <- function(tblx,
                         ...) {
     con <- if (inherits(tblx$src, 'src_dbi')) tblx$src$con else tblx$src
     name <- gsub('\\s+','_', name, perl = TRUE)
-    if (! temporary ) name <- intermed_name(name, temporary)
+    name <- intermed_name(name, temporary)
     if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
     if (config('db_trace')) {
       show_query(tblx)
