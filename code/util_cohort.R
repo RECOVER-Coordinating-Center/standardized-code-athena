@@ -145,6 +145,47 @@ new_id <- function(data,
   xform
 }
 
+#' Replace person IDs and convert dates to ages
+#' @md
+#'
+#' For the simple table structure returned by the above cohort
+#' functions, create variants with nonce IDs and dates converted to
+#' ages in days.
+#'
+#' @param cohort The tbl to scrub
+#' @param person_xwalk The tbl containing person_id mappings for
+#'   [newid()].  If `NA` (the default), will create a nonce crosswalk
+#'   based on the `person_id`s in `cohort`.  The crosswalk is not
+#'   returned, so you should do this only if you don't ever need to
+#'   walk the nonce IDs back to the originals.
+#' @param person_tbl The tbl containing person_id and birth_datetime
+#'   to use for age calculations.  Defaults to `cdm_tbl('person')`.
+#'
+#' @return The scrubbed tbk
+scrub_person_info <- function(cohort, person_xwalk = NA,
+                         person_tbl = cdm_tbl('person')) {
+  person_tbl <- select(person_tbl, person_id, birth_datetime) %>%
+    semi_join(cohort, by = 'person_id') %>%
+    mutate(birth_dt = sql('cast("birth_datetime" as date)'))
+
+  if (is.na(person_xwalk)) {
+    person_xwalk <- cohort %>% distinct(person_id) %>%
+      gen_xwalk('person_id')
+  }
+
+  cohort %>%
+    inner_join(person_tbl, by = 'person_id') %>%
+    mutate_at(vars(ends_with('_date')), funs(age = . - birth_dt)) %>%
+    rename_at(vars(ends_with('_date_age')), funs(sub('_date','',.))) %>%
+    select_at(vars(-ends_with('_date'))) %>%
+    select_at(vars(-ends_with('_datetime'))) %>%
+    select(-birth_dt) %>%
+    add_site() %>%
+    new_id(id_col = 'person_id', xwalk = person_xwalk, replace = TRUE)
+
+}
+
+
 #' Joins a given tbl to another tbl that contains site
 #' @md
 #'
