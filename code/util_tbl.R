@@ -143,7 +143,7 @@ db_exists_table <- function(db, table) {
       return(DBI::dbExistsTable(con, elts[1], schema = elts[2]))
     }
     else {
-      table <- elts
+      table <- elts[2]
     }
   }
   DBI::dbExistsTable(con, table)
