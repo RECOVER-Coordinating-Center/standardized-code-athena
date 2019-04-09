@@ -15,5 +15,5 @@ config <- function(label, ...) {
     dots <- list(...)
     if (length(dots) > 0)
         assign(label, dots[[1]], pos = req_env)
-    get0(label, envir = req_env)
+    invisible(get0(label, envir = req_env))
 }
