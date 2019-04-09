@@ -93,7 +93,16 @@ config('results_schema', NA)
 #'
 #' This Boolean value specifies whether the query log should include
 #' detailed information about execution of SQL queries in the database
-config('db_trace', FALSE)
+config('db_trace', TRUE)
+
+#' Execution mode
+#' @md
+#'
+#' The intended execution mode for the reuqest.  Recognized values are:
+#'
+#' * `production` - Intended for results generation and distribution.
+#' * `development` - Development still in progress
+config('execution_mode', 'development')
 
 source(file.path(base_dir, 'code', 'driver.R'))
 

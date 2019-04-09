@@ -52,15 +52,6 @@ config('default_results_schema', NA)
 #' `FALSE`, they are created as temporary tables.
 config('default_retain_intermediates', FALSE)
 
-#' Execution mode
-#' @md
-#'
-#' The intended execution mode for the reuqest.  Recognized values are:
-#'
-#' * `production` - Intended for results generation and distribution.
-#' * `development` - Development still in progress
-config('execution_mode', 'development')
-
 #' Names of standard tables used in queries.
 #' @md
 #'
