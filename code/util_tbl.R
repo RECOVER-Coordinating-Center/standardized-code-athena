@@ -126,7 +126,7 @@ results_name <- function(name = NA) {
 #' @md
 #'
 #' This function has the same purpose as DBI::dbExistsTable() or
-#' dbplyr::db_drop_table(), but neither of these are able to test a
+#' dbplyr::db_has_table(), but neither of these are able to test a
 #' table name created by dbplyr::in_schema().
 #'
 #' @param db A [dplyr::src()] or DBI connection
@@ -138,16 +138,40 @@ db_exists_table <- function(db, table) {
   con <- if (inherits(db, 'src_dbi')) db$con else db
   if (any(class(table) == 'ident_q')) {
     elts <- gsub('"', '', unlist(strsplit(table, '.', fixed = TRUE)))
-    if (any(grepl('ora', class(con), ignore.case = TRUE))) {
-      elts <- rev(elts)
-      return(DBI::dbExistsTable(con, elts[1], schema = elts[2]))
-    }
-    else {
-      table <- elts[2]
-    }
   }
-  DBI::dbExistsTable(con, table)
+  else {
+    elts <- table
+  }
+  if (any(grepl('ora', class(con), ignore.case = TRUE)) &&
+      length(elts) > 1) {
+    elts <- rev(elts)
+    return(DBI::dbExistsTable(con, elts[1], schema = elts[2]))
+  }
+  else if (any(class(con) == 'PostgreSQLConnection') &&
+           length(elts) == 1) {
+    res <-
+      dbGetQuery(con,
+                 paste("select tablename from pg_tables where ",
+                       "schemaname !='information_schema' and schemaname !='pg_catalog' ",
+                       "and schemaname in (select schemas[nr] from ",
+                       "(select *, generate_subscripts(schemas,1) as nr ",
+                       "from (select current_schemas(true) as schemas) a ",
+                       ") b where schemas[nr] <> 'pg_catalog') and tablename=",
+                       DBI::dbQuoteLiteral(con, elts[1]), sep = ""))
+    return(as.logical(dim(res)[1]))
+  }
+  else if (any(class(con) == 'PqConnection') &&
+           length(elts) > 1) {
+    table <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(db, elts[1]),
+                             '.',
+                             DBI::dbQuoteIdentifier(db, elts[2])))
+    return(DBI::dbExistsTable(con, table))
+  }
+  else {
+    return(DBI::dbExistsTable(con, elts))
+  }
 }
+
 
 #' Like compute(), but insure the target doesn't exist
 #' @md
