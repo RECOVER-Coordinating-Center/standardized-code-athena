@@ -1,22 +1,10 @@
 #!/usr/bin/env Rscript
 
-# Hacks necessary for Oracle support with current libraries
+# Hacks necessary for database support with current libraries
 
 # OK, Oracle temporary tables aren't temporary; their contents are.
 # So we need to clean them out when we're done.
 .env_cleanup <- function() {
-  dm <- config('ora_drop_me')
-  if (length(dm) == 0) return(invisible(TRUE))
-
-  db <- config('db_src')
-  con <- if (inherits(db, 'src_dbi')) db$con else db
-  vapply(unique(dm),
-         function (t)
-           tryCatch(DBI::dbExecute(con,
-                                   paste0('DROP TABLE ',
-                                          DBI::dbQuoteIdentifier(con,t))),
-                    error = function(e) { message(t, ' - ', e); 0L }),
-         FUN.VALUE = 0L)
 
   if ( ! is.null(config('execution_mode')) &&
          config('execution_mode') == 'production' ) {
@@ -24,11 +12,15 @@
     sink(type = 'message')
   }
 
+  if (any(class(db) == 'OraConnection')) .ora_env_cleanup(db)
+  else if (any(class(db) == 'PqConnection')) .pq_env_cleanup(db)
+  else if (any(class(db) == 'PostgreSQLConnection')) .pgsql_env_cleanup(db)
+
   invisible(TRUE)
 }
 
 
-.env_setup <- function() {
+.env_setup <- function(db = config('db_src')) {
 
   if ( ! is.null(config('execution_mode')) &&
          config('execution_mode') == 'production' ) {
@@ -57,8 +49,29 @@
                       }, ns = 'dbplyr')
   }
 
-  if (! any(class(config('db_src')) == 'OraConnection'))
-    return(invisible(TRUE))
+  if (any(class(db) == 'OraConnection')) .ora_env_setup(db)
+  else if (any(class(db) == 'PqConnection')) .pq_env_setup(db)
+  else if (any(class(db) == 'PostgreSQLConnection')) .pgsql_env_setup(db)
+
+  invisible(TRUE)
+}
+
+.pq_env_setup <- function(db = config('db_src')) {
+  assignInNamespace('db_has_table.DBIConnection',
+                    function(con, table, ...) db_exists_table(con, table),
+                    ns = 'dbplyr')
+}
+.pq_env_cleanup <- function(db = config('db_src')) invisible(TRUE)
+
+.pgsql_env_setup <- function(db = config('db_src')) {
+  assignInNamespace('db_has_table.PostgreSQLConnection',
+                    function(con, table, ...) db_exists_table(con, table),
+                    ns = 'dbplyr')
+
+}
+.pgsql_env_cleanup <- function(db = config('db_src')) invisible(TRUE)
+
+.ora_env_setup <- function(db = config('db_src')) {
 
   # List of Oracle "temp" tables that need to be dropped
   config('ora_drop_me', character(0))
@@ -209,4 +222,16 @@
                     }, ns = 'dbplyr')
 
   invisible(TRUE)
+}
+.ora_env_cleanup <- function(db = config('db_src')) {
+  dm <- config('ora_drop_me')
+  if (length(dm) == 0) return(invisible(TRUE))
+
+  con <- if (inherits(db, 'src_dbi')) db$con else db
+  vapply(unique(dm),
+         function (t)
+           tryCatch(dplyr:::db_drop_table(con, t),
+                    error = function(e) { message(t, ' - ', e); 0L }),
+         FUN.VALUE = 0L)
+
 }
