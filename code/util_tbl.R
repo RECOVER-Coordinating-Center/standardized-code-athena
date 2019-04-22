@@ -157,7 +157,7 @@ db_exists_table <- function(db, table) {
                        "(select *, generate_subscripts(schemas,1) as nr ",
                        "from (select current_schemas(true) as schemas) a ",
                        ") b where schemas[nr] <> 'pg_catalog') and tablename=",
-                       DBI::dbQuoteLiteral(con, elts[1]), sep = ""))
+                       DBI::dbQuoteString(con, elts[1]), sep = ""))
     return(as.logical(dim(res)[1]))
   }
   else if (any(class(con) == 'PqConnection') &&
