@@ -145,12 +145,40 @@ new_id <- function(data,
   xform
 }
 
+#' Convert dates to ages
+#' @md
+#'
+#' For a simple table resembling the PEDSnet (or PCORnet, since both
+#' use a `_date` suffix to denote dates), create a new table in which
+#' dates are replaced with ages in days.  Times are removed.
+#'
+#' @param cohort The tbl to scrub
+#' @param person_tbl The tbl containing person_id and birth_datetime
+#'   to use for age calculations.  Defaults to `cdm_tbl('person')`.
+#'
+#' @return The scrubbed tbk
+dates_to_ages <- function(cohort,
+                          person_tbl = cdm_tbl('person')) {
+  person_tbl <- select(person_tbl, person_id, birth_datetime) %>%
+    semi_join(cohort, by = 'person_id') %>%
+    mutate(birth_dt = sql('cast("birth_datetime" as date)'))
+
+  cohort %>%
+    inner_join(person_tbl, by = 'person_id') %>%
+    mutate_at(vars(ends_with('_date')), list(age = ~(. - birth_dt))) %>%
+    rename_at(vars(ends_with('_date_age')), list(~sub('_date','',.))) %>%
+    select_at(vars(-ends_with('_date'))) %>%
+    select_at(vars(-ends_with('_datetime'))) %>%
+    select_at(vars(-ends_with('_time'))) %>%
+    select(-birth_dt)
+}
+
+
 #' Replace person IDs and convert dates to ages
 #' @md
 #'
-#' For the simple table structure returned by the above cohort
-#' functions, create variants with nonce IDs and dates converted to
-#' ages in days.
+#' For a simple table structure resembling the PEDSnet CDM, create
+#' variants with nonce person IDs and dates converted to ages in days.
 #'
 #' @param cohort The tbl to scrub
 #' @param person_xwalk The tbl containing person_id mappings for
@@ -161,26 +189,16 @@ new_id <- function(data,
 #' @param person_tbl The tbl containing person_id and birth_datetime
 #'   to use for age calculations.  Defaults to `cdm_tbl('person')`.
 #'
-#' @return The scrubbed tbk
+#' @return The scrubbed tbl
 scrub_person_info <- function(cohort, person_xwalk = NA,
                          person_tbl = cdm_tbl('person')) {
-  person_tbl <- select(person_tbl, person_id, birth_datetime) %>%
-    semi_join(cohort, by = 'person_id') %>%
-    mutate(birth_dt = sql('cast("birth_datetime" as date)'))
-
   if (is.na(person_xwalk)) {
     person_xwalk <- cohort %>% distinct(person_id) %>%
       gen_xwalk('person_id')
   }
 
   cohort %>%
-    inner_join(person_tbl, by = 'person_id') %>%
-    mutate_at(vars(ends_with('_date')), funs(age = . - birth_dt)) %>%
-    rename_at(vars(ends_with('_date_age')), funs(sub('_date','',.))) %>%
-    select_at(vars(-ends_with('_date'))) %>%
-    select_at(vars(-ends_with('_datetime'))) %>%
-    select(-birth_dt) %>%
-    add_site() %>%
+    dates_to_ages(person_tbl) %>% 
     new_id(id_col = 'person_id', xwalk = person_xwalk, replace = TRUE)
 
 }
