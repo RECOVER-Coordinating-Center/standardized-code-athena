@@ -150,14 +150,14 @@ db_exists_table <- function(db, table) {
   else if (any(class(con) == 'PostgreSQLConnection') &&
            length(elts) == 1) {
     res <-
-      dbGetQuery(con,
-                 paste("select tablename from pg_tables where ",
-                       "schemaname !='information_schema' and schemaname !='pg_catalog' ",
-                       "and schemaname in (select schemas[nr] from ",
-                       "(select *, generate_subscripts(schemas,1) as nr ",
-                       "from (select current_schemas(true) as schemas) a ",
-                       ") b where schemas[nr] <> 'pg_catalog') and tablename=",
-                       DBI::dbQuoteString(con, elts[1]), sep = ""))
+      DBI::dbGetQuery(con,
+                      paste("select tablename from pg_tables where ",
+                            "schemaname !='information_schema' and schemaname !='pg_catalog' ",
+                            "and schemaname in (select schemas[nr] from ",
+                            "(select *, generate_subscripts(schemas,1) as nr ",
+                            "from (select current_schemas(true) as schemas) a ",
+                            ") b where schemas[nr] <> 'pg_catalog') and tablename=",
+                            DBI::dbQuoteString(con, elts[1]), sep = ""))
     return(as.logical(dim(res)[1]))
   }
   else if (any(class(con) == 'PqConnection') &&
