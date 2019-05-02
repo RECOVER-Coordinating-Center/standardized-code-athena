@@ -245,6 +245,57 @@ collect_new <- function(tblx, ...) {
   rslt
 }
 
+#' Like copy_to(), but allow for debug output
+#' @md
+#'
+#' This function is a simple wrapper around copy_to(), that provides
+#' some trace output, allowing that there is less query construction
+#' that occurs than in functions starting work in the database.  It
+#' also works around a bug in dplyr that renders `overwrite`
+#' non-functional in some circumstances.
+#'
+#' @param dest A remote data source.  Defaults to `config('db_src')`.
+#' @param df The data frame/tbl to be copied to the database
+#' @param name The name to give the resulting table.  Defaults to the
+#'   name of the data frame as qualified by intermed_name().
+#' @param overwrite Whether to remove an existing table of the same
+#'   name.  Defaults to TRUE, which is different from the dplyr
+#'   function of the same name.
+#' @param temporary Whether the created table should be temporary.
+#'   Defaults to the opposite of `config('retain_intermediates')`.
+#' @param ... Other arguments passed to dplyr::copy_to()
+#'
+#' @return A tbl pointing to the remote table
+copy_to_new <- function(dest = config('db_src'), df,
+                        name = deparse(substitute(df)),
+                        overwrite = TRUE,
+                        temporary = ! config('retain_intermediates'),
+                        ...) {
+  name <- intermed_name(name)
+  if (config('db_trace')) {
+    message(' -> copy_to')
+    start <- Sys.time()
+    message(start)
+    message('Data: ', deparse(substitute(df)))
+    message('Table name: ', name, ', (temp: ', temporary, ')')
+    message('Data elements: ', paste(tbl_vars(df), collapse = ','))
+    message('Rows: ', NROW(df))
+  }
+  if (overwrite &&
+      db_exists_table(dest, name)) {
+    con <- if (inherits(dest, 'src_dbi')) dest$con else dest
+    dplyr::db_drop_table(con, name)
+  }
+  rslt <- dplyr::copy_to(dest = dest, df = df, name = name,
+                         overwrite = overwrite, temporary = temporary,
+                         ...)
+  if (config('db_trace')) {
+    end  <- Sys.time()
+    message(end, ' ==> ', format(end - start))
+  }
+  rslt
+}
+
 .output_csv <- function(data, name = NA, local = FALSE) {
   if (is.na(name)) name <- quo_name(enquo(data))
   dirs <- config('subdirs')
