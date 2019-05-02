@@ -58,12 +58,12 @@ load_codeset <- function(name,
   if (! is.null(cache[[name]])) return(cache[[name]])
 
   codes <-
-    copy_to(db,
-            read_codeset(name, col_types),
-            name = intermed_name(table_name),
-            temporary = ! config('retain_intermediates'),
-            overwrite = TRUE,
-            indexes = list('concept_id'))
+    copy_to_new(db,
+                read_codeset(name, col_types),
+                name = intermed_name(table_name),
+                temporary = ! config('retain_intermediates'),
+                overwrite = TRUE,
+                indexes = list('concept_id'))
   cache[[name]] <- codes
   codes
 }
