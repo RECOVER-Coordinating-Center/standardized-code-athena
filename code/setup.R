@@ -4,7 +4,7 @@
 
 # OK, Oracle temporary tables aren't temporary; their contents are.
 # So we need to clean them out when we're done.
-.env_cleanup <- function() {
+.env_cleanup <- function(db = config('db_src')) {
 
   if ( ! is.null(config('execution_mode')) &&
          config('execution_mode') == 'production' ) {
