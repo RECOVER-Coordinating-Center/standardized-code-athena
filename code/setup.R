@@ -217,7 +217,7 @@
                         if (inherits(x, c('ident_q', 'SQL')))
                           x
                       else
-                        dbplyr::escape(dbplyr::ident(x))
+                        dbplyr::escape(dbplyr::ident(x), con = config('db_src'))
                       dbplyr::ident_q(paste0(ei(schema), '.', ei(table)))
                     }, ns = 'dbplyr')
 
