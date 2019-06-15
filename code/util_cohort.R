@@ -224,6 +224,8 @@ scrub_person_info <- function(cohort, person_xwalk = NA,
 add_site <- function(f_tbl,
                      site_tbl = cdm_tbl('person'),
                      id_col = 'person_id') {
+  if (any(tbl_vars(f_tbl) == 'site')) return(f_tbl)
+
   idq <- enquo(id_col)
 
   if (any(tbl_vars(site_tbl) == 'site')) {
