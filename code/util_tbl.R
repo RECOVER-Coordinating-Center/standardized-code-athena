@@ -60,15 +60,19 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                                         collapse = ""),
                           temporary = ! config('retain_intermediates')) {
   if ( ! is.na(config('req_tag'))) {
+    tag <- config('req_tag')
+    add_tag <- function(x) {
+      no_tag <- ! grepl(paste0(tag,'$'), x)
+      x[no_tag] <- paste0(x[no_tag], tag)
+      x
+    }
     if (any(class(name) == 'ident_q') ) {
       # Best guess - works but relies on stringification of dbplyr::in_schema()
       parts <- regmatches(name, regexec('(.+)\\.(.+)', name))
-      name <- dbplyr::in_schema(parts[[1]][2],
-                                paste0(parts[[1]][3], config('req_tag'),
-                                       collapse = ''))
+      name <- dbplyr::in_schema(parts[[1]][2], add_tag(parts[[1]][3]))
     }
     else {
-      name <- paste0(name, config('req_tag'), collapse = '')
+      name <- add_tag(name)
     }
   }
   if ( ! temporary  & ! is.na(config('results_schema')) &
