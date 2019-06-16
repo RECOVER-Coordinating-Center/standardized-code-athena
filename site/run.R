@@ -29,16 +29,17 @@
 #' with a simple path string.  If you don't the program will make a
 #' guess about where the package is located, and will stop with an
 #' error if it can't.
-base_dir <- '/path/to/this/request'
+base_dir <- 'auto-detect'
 
-if (base_dir == '/path/to/this/request')
+if (base_dir == 'auto-detect')
     base_dir <-
         {
             if (! is.na(Sys.getenv('PEDSNET_DATA_REQUEST_ROOT', unset = NA))) {
                 file.path(Sys.getenv('PEDSNET_DATA_REQUEST_ROOT'), 'OBrien_vWD')
             }
             else {
-                if (file.exists('run.R')) {
+              if (any(file.exists(c('run.R',
+                                    file.path('..', 'site', 'run.R'))))) {
                     file.path(getwd(), '..')
                 }
                 else {
