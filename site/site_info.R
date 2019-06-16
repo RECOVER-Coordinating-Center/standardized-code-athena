@@ -56,16 +56,20 @@ config('default_retain_intermediates', FALSE)
 #' @md
 #'
 #' Please edit only the right-hand side of each assignment.
-#' Table names must be lower-case.
+#' Table names on the left must be lower-case; those on the right
+#' must reflect naming conventions in the database.
 config('table_names',
        list(adt_occurrence = 'adt_occurrence',
             care_site = 'care_site',
+            condition_era = 'condition_era',
             condition_occurrence = 'condition_occurrence',
             death = 'death',
+            device_exposure = 'device_exposure',
             dose_era = 'dose_era',
             drug_era = 'drug_era',
             drug_exposure = 'drug_exposure',
             fact_relationship = 'fact_relationship',
+            immunization = 'immunization',
             location = 'location',
             measurement = 'measurement',
             measurement_anthro = 'measurement',
