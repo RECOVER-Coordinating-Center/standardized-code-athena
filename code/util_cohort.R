@@ -156,17 +156,29 @@ new_id <- function(data,
 #' @param person_tbl The tbl containing person_id and birth_datetime
 #'   to use for age calculations.  Defaults to `cdm_tbl('person')`.
 #'
-#' @return The scrubbed tbk
+#' @return The scrubbed tbl
 dates_to_ages <- function(cohort,
                           person_tbl = cdm_tbl('person')) {
-  person_tbl <- select(person_tbl, person_id, birth_datetime) %>%
-    semi_join(cohort, by = 'person_id') %>%
-    mutate(birth_dt = sql('cast("birth_datetime" as date)'))
+  cohort_vars <- tbl_vars(cohort)
+
+  if (! any(grepl('_date', cohort_vars))) return(cohort)
+
+  if (any(cohort_vars == 'birth_date')) {
+    cohort <- cohort %>% mutate(birth_dt = birth_date)
+  }
+  else {
+    if (! any(cohort_vars == 'birth_datetime')) {
+      cohort <- inner_join(cohort,
+                           select(person_tbl, person_id, birth_datetime),
+                           by = 'person_id')
+      }
+    cohort <- mutate(cohort,
+                     birth_dt = sql('cast("birth_datetime" as date)'))
+  }
 
   cohort %>%
-    inner_join(person_tbl, by = 'person_id') %>%
-    mutate_at(vars(ends_with('_date')), list(age = ~(. - birth_dt))) %>%
-    rename_at(vars(ends_with('_date_age')), list(~sub('_date','',.))) %>%
+    mutate_at(vars(ends_with('_date')), funs(age = (. - birth_dt))) %>%
+    rename_at(vars(ends_with('_date_age')), funs(sub('_date','',.))) %>%
     select_at(vars(-ends_with('_date'))) %>%
     select_at(vars(-ends_with('_datetime'))) %>%
     select_at(vars(-ends_with('_time'))) %>%
@@ -198,7 +210,7 @@ scrub_person_info <- function(cohort, person_xwalk = NA,
   }
 
   cohort %>%
-    dates_to_ages(person_tbl) %>% 
+    dates_to_ages(person_tbl) %>%
     new_id(id_col = 'person_id', xwalk = person_xwalk, replace = TRUE)
 
 }
