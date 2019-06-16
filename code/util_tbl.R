@@ -34,31 +34,8 @@ vocabulary_tbl <-
   function(name, db = config('db_src'))
     .qual_tbl(name, db, 'vocabulary_schema')
 
-#' Connect to a result table
-#' @md
-#'
-#' @param db The database connection
-#' @param name The name of the table
-#'
-#' @return A [dplyr::tbl()]] pointing to the table
-results_tbl <-
-  function(name, db = config('db_src'))
-    .qual_tbl(name, db, 'results_schema')
 
-#' Construct a (possibly schema-qualified) intermediate result table name
-#' @md
-#'
-#' If the name passed in is already the result of a call to
-#' [dbplyr::in_schema()], then no further modification is made.
-#'
-#' @param name The name of the table.  Defaults to a random string.
-#' @param temporary Logical indicating whether the table is temporary.
-#'     Defaults to the negation of `config(retain_intermed)`.
-#'
-#' @return The resultant name
-intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
-                                        collapse = ""),
-                          temporary = ! config('retain_intermediates')) {
+.add_req_tag <- function(name) {
   if ( ! is.na(config('req_tag'))) {
     tag <- config('req_tag')
     add_tag <- function(x) {
@@ -75,6 +52,39 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
       name <- add_tag(name)
     }
   }
+  name
+}
+#' Connect to a result table
+#' @md
+#'
+#' @param db The database connection
+#' @param name The name of the table
+#' @param tag Add the request tag to the table name, as would be the
+#'   case if the table were created by this package.  Defaults to
+#'   TRUE.
+#'
+#' @return A [dplyr::tbl()]] pointing to the table
+results_tbl <-
+  function(name, db = config('db_src'), tag = TRUE) {
+    if (tag) name <- .add_req_tag(name)
+   .qual_tbl(name, db, 'results_schema')
+  }
+
+#' Construct a (possibly schema-qualified) intermediate result table name
+#' @md
+#'
+#' If the name passed in is already the result of a call to
+#' [dbplyr::in_schema()], then no further modification is made.
+#'
+#' @param name The name of the table.  Defaults to a random string.
+#' @param temporary Logical indicating whether the table is temporary.
+#'     Defaults to the negation of `config(retain_intermed)`.
+#'
+#' @return The resultant name
+intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
+                                        collapse = ""),
+                          temporary = ! config('retain_intermediates')) {
+  name <- .add_req_tag(name)
   if ( ! temporary  & ! is.na(config('results_schema')) &
        ! any(class(name) == 'ident_q') )
         dbplyr::in_schema(config('results_schema'), name)
