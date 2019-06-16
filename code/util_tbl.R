@@ -271,7 +271,7 @@ copy_to_new <- function(dest = config('db_src'), df,
                         overwrite = TRUE,
                         temporary = ! config('retain_intermediates'),
                         ...) {
-  name <- intermed_name(name)
+  name <- intermed_name(name, temporary = temporary)
   if (config('db_trace')) {
     message(' -> copy_to')
     start <- Sys.time()
