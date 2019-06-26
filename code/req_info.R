@@ -19,7 +19,7 @@ config('req_version', 1)
 #' of this query.  Replace default with study name, ticket number, etc.
 #' for a more readable result.  Keep the tag short, given Oracle limits
 #' on table name length.
-config('req_tag', paste0('_',sample(letters, 5), collapse = ''))
+config('req_tag', paste0('_',paste0(sample(letters, 5), collapse = '')))
 
 # In most cases, these assignments should not need to be changed.
 # But if for some reason you have altered the layout of the request
