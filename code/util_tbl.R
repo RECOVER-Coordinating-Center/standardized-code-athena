@@ -45,7 +45,7 @@ vocabulary_tbl <-
     }
     if (any(class(name) == 'ident_q') ) {
       # Best guess - works but relies on stringification of dbplyr::in_schema()
-      parts <- regmatches(name, regexec('(.+)\\.(.+)', name))
+      parts <- regmatches(name, regexec('^"*(.+?)"*\\."*(.+?)"*$', name))
       name <- dbplyr::in_schema(parts[[1]][2], add_tag(parts[[1]][3]))
     }
     else {
