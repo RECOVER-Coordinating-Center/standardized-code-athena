@@ -212,8 +212,10 @@ compute_new <- function(tblx,
                         temporary = ! config('retain_intermediates'),
                         ...) {
     con <- if (inherits(tblx$src, 'src_dbi')) tblx$src$con else tblx$src
-    name <- gsub('\\s+','_', name, perl = TRUE)
-    name <- intermed_name(name, temporary)
+    if (!any(class(name) == 'ident_q') && length(name) == 1) {
+      name <- gsub('\\s+','_', name, perl = TRUE)
+      name <- intermed_name(name, temporary)
+    }
     if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
     if (config('db_trace')) {
       show_query(tblx)
