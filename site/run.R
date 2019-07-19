@@ -107,5 +107,6 @@ config('execution_mode', 'development')
 
 source(file.path(base_dir, 'code', 'driver.R'))
 
-if ( is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) )
+if ( is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) &&
+     config('execution_mode') != 'development' )
     run_request(base_dir)
