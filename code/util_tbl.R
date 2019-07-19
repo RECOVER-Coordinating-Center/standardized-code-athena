@@ -360,7 +360,7 @@ output_tbl <- function(data, name = NA, local = FALSE,
     if (exists('src', where = data) &&
         ifelse(inherits(data$src, 'src_sql'),
                same_src(data$src, config('db_src')),
-               identical(src, config('db_src')))) {
+               identical(data$src, config('db_src')))) {
       rslt <- compute_new(data, results_name(name),
                           temporary = FALSE, ...)
     }
