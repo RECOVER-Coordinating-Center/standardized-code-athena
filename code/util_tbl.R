@@ -334,13 +334,13 @@ copy_to_new <- function(dest = config('db_src'), df,
 #'   written to a local-only location, which is not typically returned
 #'   with query results.  Defaults to FALSE.
 #' @param file An indicator of whether the data should be written out
-#'   as a CSV file.  If it is NA, no file will be written. If it has
-#'   any other value, a CSV file will be written with that name (with
-#'   a ".csv" suffic appended).  Defaults to results` if in production
-#'   mode, NA otherwise.
+#'   as a CSV file.  If it is FALSE, no file will be written. If it is
+#'   TRUE, a CSV file will be written named `name`, with a `.csv`
+#'   suffix appended.  Defaults to TRUE if in production mode, FALSE
+#'   otherwise.
 #' @param db A Boolean indicator of whether the data should be written
-#'   to a results table in the database.  Defaults to TRUE if `file`
-#'   is NA, and FALSE otherwise.
+#'   to a results table in the database.  Defaults to the opposite of
+#'   `file`.
 #' @param ... Additional arguments passed to the database table
 #'   creation function.
 #'
@@ -348,11 +348,11 @@ copy_to_new <- function(dest = config('db_src'), df,
 #'   possibly collect()ed.
 output_tbl <- function(data, name = NA, local = FALSE,
                        file = ifelse(config('execution_mode') ==
-                                       'production', 'results', NA),
-                       db = ifelse(!is.na(file), FALSE, TRUE), ...) {
+                                       'production', TRUE, FALSE),
+                       db = ifelse(file, FALSE, TRUE), ...) {
   if (is.na(name)) name <- quo_name(enquo(data))
 
-  if ( !is.na(file)) {
+  if (file) {
     rslt <- .output_csv(data, name, local)
   }
 
