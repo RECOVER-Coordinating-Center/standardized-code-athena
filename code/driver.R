@@ -27,7 +27,8 @@ suppressPackageStartupMessages(library(methods))
 #'
 
 
-.load <- function(here) {
+.load <- function(here = ifelse(typeof(get('config')) == 'closure',
+                                config('base_dir'), base_dir)) {
     source(file.path(here, 'code', 'config.R'))
     source(file.path(here, 'code', 'req_info.R'))
     source(config('site_info'))
