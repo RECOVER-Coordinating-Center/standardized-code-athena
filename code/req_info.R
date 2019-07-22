@@ -15,11 +15,6 @@ config('cdm_version', 1)
 config('enqueued_date', as.Date('2001-01-01'))
 
 config('req_version', 1)
-#' Unique tag for non-temporary table names created during execution
-#' of this query.  Replace default with study name, ticket number, etc.
-#' for a more readable result.  Keep the tag short, given Oracle limits
-#' on table name length.
-config('req_tag', paste0('_',paste0(sample(letters, 5), collapse = '')))
 
 # In most cases, these assignments should not need to be changed.
 # But if for some reason you have altered the layout of the request

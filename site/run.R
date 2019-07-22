@@ -83,6 +83,16 @@ config('retain_intermediates', NA)
 #' If it is `NA`, the default value from site_info.R is used.
 config('results_schema', NA)
 
+#' Request-specific suffix for output
+#' @md
+#'
+#' Unique tag for non-temporary table names created during execution
+#' of this query.  Replace default with ticket number or similar for a
+#' more readable result.  Keep the tag short, given Oracle limits on
+#' table name length.
+config('results_name_tag',
+       paste0('_',paste0(sample(letters, 5), collapse = '')))
+
 #################################################################
 #
 # End of site-specific code.  Please do not edit below this point

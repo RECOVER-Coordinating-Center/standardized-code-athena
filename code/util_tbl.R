@@ -35,9 +35,9 @@ vocabulary_tbl <-
     .qual_tbl(name, db, 'vocabulary_schema')
 
 
-.add_req_tag <- function(name) {
-  if ( ! is.na(config('req_tag'))) {
-    tag <- config('req_tag')
+.add_results_name_tag <- function(name) {
+  if ( ! is.na(config('results_name_tag'))) {
+    tag <- config('results_name_tag')
     add_tag <- function(x) {
       no_tag <- ! grepl(paste0(tag,'$'), x)
       x[no_tag] <- paste0(x[no_tag], tag)
@@ -66,7 +66,7 @@ vocabulary_tbl <-
 #' @return A [dplyr::tbl()]] pointing to the table
 results_tbl <-
   function(name, db = config('db_src'), tag = TRUE) {
-    if (tag) name <- .add_req_tag(name)
+    if (tag) name <- .add_results_name_tag(name)
    .qual_tbl(name, db, 'results_schema')
   }
 
@@ -84,7 +84,7 @@ results_tbl <-
 intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                                         collapse = ""),
                           temporary = ! config('retain_intermediates')) {
-  name <- .add_req_tag(name)
+  name <- .add_results_name_tag(name)
   if ( ! temporary  & ! is.na(config('results_schema')) &
        ! any(class(name) == 'ident_q') )
         dbplyr::in_schema(config('results_schema'), name)
