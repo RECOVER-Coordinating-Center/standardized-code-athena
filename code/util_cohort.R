@@ -24,7 +24,7 @@ init_sum <- function(..., set_default = TRUE) {
   x
 }
 
-#' Add rows to a summary tibble
+#' Add rows to an event tbl
 #' @md
 #'
 #' This function adds rows to an existing tibble, filling in values
@@ -48,7 +48,7 @@ append_sum <- function(..., event_list = NA) {
   x
 }
 
-#' Output summary tbl
+#' Output event tbl
 #' @md
 #'
 #' This function writes out the summary data accumulated by
