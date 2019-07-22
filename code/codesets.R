@@ -51,7 +51,8 @@ read_codeset <- function(name,
 load_codeset <- function(name,
                          col_types = 'iccc',
                          table_name = name,
-                         db = config('db_src')) {
+                         db = config('db_src'),
+                         indexes = list('concept_id')) {
 
   if (is.null(config('_codesets'))) config('_codesets', list())
   cache <- config('_codesets')
@@ -63,7 +64,7 @@ load_codeset <- function(name,
                 name = intermed_name(table_name),
                 temporary = ! config('retain_intermediates'),
                 overwrite = TRUE,
-                indexes = list('concept_id'))
+                indexes = indexes)
   cache[[name]] <- codes
   codes
 }
