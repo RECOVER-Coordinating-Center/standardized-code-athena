@@ -365,10 +365,10 @@ output_tbl <- function(data, name = NA, local = FALSE,
                           temporary = FALSE, ...)
     }
     else {
-      rslt <- copy_to(config('db_src'), collect_new(data),
-                      results_name(name),
-                      temporary = FALSE,
-                      overwrite = TRUE, ...)
+      rslt <- copy_to_new(config('db_src'), collect_new(data),
+                          results_name(name),
+                          temporary = FALSE,
+                          overwrite = TRUE, ...)
     }
   }
 
