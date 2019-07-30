@@ -63,14 +63,12 @@ suppressPackageStartupMessages(library(methods))
     .compute_new()  #if applicable
 
   # counts the number of persons for this part of the query
-  append_sum(rslt,
-             cohort = 'Name of first computation or cohort (if feasibility query)',
+  append_sum(cohort = 'Name of first computation or cohort (if feasibility query)',
              persons = distinct_ct(starter))
 
   next_cohort <- function_call_for_study(starter) %>%
     .other_functions_if_applicable('') # if applicable
-  append_sum(rslt,
-             cohort = 'Name of second computation or cohort (if feasibility query)',
+  append_sum(cohort = 'Name of second computation or cohort (if feasibility query)',
              persons = distinct_ct(next_cohort))
 
 
@@ -78,22 +76,21 @@ suppressPackageStartupMessages(library(methods))
 
 
   # Simple output to CSV
-  output_tbl(starter, name = 'base_cohort', file = TRUE, db = FALSE)
+  output_tbl(starter, name = 'base_cohort')
 
   # Alternatively, replace person_ids and write output
   pers_xwalk <- gen_xwalk(starter, 'person_id')
   output_tbl(new_id(starter, 'person_id', pers_xwalk, replace = TRUE),
-             name = 'base_cohort', file = 'result', db = TRUE)
+             name = 'base_cohort')
   output_tbl(new_id(next_cohort, 'person_id', pers_xwalk, replace = TRUE),
-             name = 'next_cohort', file = 'result', db = TRUE)
+             name = 'next_cohort')
   # Don't forget to save the crosswalk
-  output_tbl(pers_xwalk, name = 'person_xwalk', file = TRUE,
-             local = TRUE, db = TRUE)
+  output_tbl(pers_xwalk, name = 'person_xwalk', local = TRUE)
 
   # Write step summary log to CSV and/or database, as determined by configuration
   output_sum()
 
-  invisible(rslt)
+  invisible(starter)
 
 }
 
