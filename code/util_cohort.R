@@ -204,7 +204,7 @@ dates_to_ages <- function(cohort,
 #' @return The scrubbed tbl
 scrub_person_info <- function(cohort, person_xwalk = NA,
                          person_tbl = cdm_tbl('person')) {
-  if (is.na(person_xwalk)) {
+  if (any(is.na(person_xwalk))) {
     person_xwalk <- cohort %>% distinct(person_id) %>%
       gen_xwalk('person_id')
   }
