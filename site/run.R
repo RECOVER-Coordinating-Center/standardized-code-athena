@@ -111,8 +111,9 @@ config('db_trace', TRUE)
 #'
 #' The intended execution mode for the reuqest.  Recognized values are:
 #'
-#' * `production` - Intended for results generation and distribution.
-#' * `development` - Development still in progress
+#' * `development` - Development and testing still in progress
+#' * `production` - Intended for results generation
+#' * `distribution` - Production version for distribution to remote sites
 config('execution_mode', 'development')
 
 source(file.path(base_dir, 'code', 'driver.R'))
