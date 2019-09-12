@@ -336,20 +336,21 @@ copy_to_new <- function(dest = config('db_src'), df,
 #' @param file An indicator of whether the data should be written out
 #'   as a CSV file.  If it is FALSE, no file will be written. If it is
 #'   TRUE, a CSV file will be written named `name`, with a `.csv`
-#'   suffix appended.  Defaults to TRUE if in production mode, FALSE
+#'   suffix appended.  Defaults to FALSE if in development mode, TRUE
 #'   otherwise.
 #' @param db A Boolean indicator of whether the data should be written
-#'   to a results table in the database.  Defaults to the opposite of
-#'   `file`.
+#'   to a results table in the database.  Defaults to FALSE if in
+#'   distribution mode, TRUE otherwise.
 #' @param ... Additional arguments passed to the database table
 #'   creation function.
 #'
 #' @return The result of the operation, typically a copy of data,
 #'   possibly collect()ed.
 output_tbl <- function(data, name = NA, local = FALSE,
-                       file = ifelse(config('execution_mode') ==
-                                       'production', TRUE, FALSE),
-                       db = ifelse(file, FALSE, TRUE), ...) {
+                       file = ifelse(config('execution_mode') !=
+                                       'development', TRUE, FALSE),
+                       db = ifelse(config('execution_mode') !=
+                                     'distribution', TRUE, FALSE), ...) {
   if (is.na(name)) name <- quo_name(enquo(data))
 
   if (file) {
