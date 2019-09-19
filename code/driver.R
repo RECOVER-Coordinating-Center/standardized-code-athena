@@ -56,6 +56,9 @@ suppressPackageStartupMessages(library(methods))
 
 .run  <- function(base_dir = config('base_dir')) {
 
+  message('Starting execution with framework version ',
+          config('framework_version'))
+
   init_sum(cohort = 'Start', persons = 0)
 
   message('Insert message here')
@@ -89,6 +92,8 @@ suppressPackageStartupMessages(library(methods))
 
   # Write step summary log to CSV and/or database, as determined by configuration
   output_sum()
+
+  message('Done.')
 
   invisible(starter)
 

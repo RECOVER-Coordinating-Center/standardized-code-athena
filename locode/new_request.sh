@@ -26,11 +26,25 @@ fi
 cd "$src/.."
 cp -R code  local locode reporting request results site specs "$target"
 cp .gitignore "$target"
+vers=$(git log -1 --date=short --format='%h %ad')
 
 cd "$target"
+sed -e "s/<framework_version>/$vers/" <code/req_info.R >code/$$.tmp && \
+    mv -f code/$$.tmp code/req_info.R
 if [[ $(git status >/dev/null 2>&1; echo $?) -ne 0 ]]; then git init .; fi
 git add .
 git commit -m 'Standard framework'
 
-echo "Done."
+tbase=$(basename $target)
+echo "
+Setup complete.
+
+Please remember to:
+  * Create tracking ticket(s) in Jira for this request
+  * If this is not part of a larger existing project, connect this repo
+    to a Bitbucket remote (creating it if needed) using something like
+    git remote add origin https://reslnpedsnops01.research.chop.edu/bitbucket/scm/prp/$tbase.git
+    git push -u origin master
+
+Done."
 

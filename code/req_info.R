@@ -36,3 +36,8 @@ config('subdirs',
             spec_dir = 'specs',
             local_dir = 'local',
             result_dir = 'results'))
+
+# This should not be changed if the request was set up by the
+# new_request script.  If you are setting up manually, edit this
+# to reflect the version of the standard framework repo used.
+config('framework_version', '<framework_version>')
