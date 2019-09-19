@@ -5,9 +5,8 @@
 # Usage: /path/to/new_request.sh dir_name
 
 target=${1:-new_request}
-if [[ $(ls "$target"/* >/dev/null 2>&1) || \
-      $(ls "$target"/.[a-z]* >/dev/null 2>&1 ; \
-      echo $?) -eq 0  ]]
+if [[ $(ls "$target"/* 2>/dev/null) != '' || \
+      $(ls "$target"/.[a-zA-Z0-9]* 2>/dev/null | grep -v ^.git) != '' ]]
 then
     echo >&2 "Target directory $target already has content."
     exit 1
@@ -25,7 +24,7 @@ fi
 
 cd "$src/.."
 cp -R code  local locode reporting request results site specs "$target"
-cp .gitignore "$target"
+cat .gitignore >>"$target/.gitignore"
 vers=$(git log -1 --date=short --format='%h %ad')
 
 cd "$target"
