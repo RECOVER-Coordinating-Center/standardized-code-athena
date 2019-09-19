@@ -183,15 +183,16 @@
                       name <- name %||%
                         gsub('[^A-Za-z0-9_]+', '',
                              paste0(c(tabname, columns), collapse = "_"))
+                      now <- as.integer(Sys.time())
                       if (any(class(con) == 'OraConnection') &
                           nchar(name) > 30) {
-                        name <- gsub('(.)\\1+', '\\1', name)
-                        if (nchar(name) > 30)
-                          name <- gsub('[aeiou]', '', name)
-                        if (nchar(name) > 30)
-                          name <-
-                            paste0(sample(letters, 12, replace = TRUE),
-                                   collapse = "")
+                        # Generate a likely unique, if not very readable, name
+                        name <-
+                          substr(sprintf('ix%d%d_%s%s',
+                                         Sys.getpid(), now,
+                                         paste0(substr(columns,1,1), collapse = ''),
+                                         config('results_name_tag')),
+                                 1, 30)
                       }
                       fields <- dbplyr::escape(ident(columns), parens = TRUE, con = con)
                       sql <- dbplyr::build_sql(
@@ -200,7 +201,10 @@
                         " ON ", dbplyr::as.sql(tabname), " ", fields,
                         con = con)
 
-                      dbExecute(con, sql)
+                      rslt <- dbExecute(con, sql)
+                      if (any(class(con) == 'OraConnection') &&
+                            as.integer(Sys.time()) == now) Sys.sleep(1)
+                      rslt
                     }, ns = 'dbplyr')
 
   # Oracle can obviously produce explain plans, but it requires
