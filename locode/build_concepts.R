@@ -127,25 +127,28 @@ process_set <- function(codes, vocabularies) {
 #' @param std_concepts A table contaning standard concepts, in the
 #'   form returned by [standardize_concepts()].
 #'
-#' @return A tbl in the vocablary database, with the descendant data
-#'   in `concept_id`, `concept_name`, `concept_code`, and
-#'   `vocabulary_id`, and each row annotated with
-#'   `ancestor_concept_id` containing the original `std_concept_id`
-#'   and with any other columns present in std_concepts for that row.
+#' @return A tbl in the vocabulary database, with the descendant data
+#'   in `std_concept_id`, `std_concept_name`, `std_concept_code`, and
+#'   `std_vocabulary_id`, and each row annotated with
+#'   `ancestor_concept_id` and `ancestor_concept_name`, containing the original
+#'   `std_concept_id` and `std_concept_name`, respectively.
 expand_codeset <- function(std_concepts) {
-  probe <- std_concepts %>% select(std_concept_id)
+  probe <- std_concepts %>% select(ancestor_concept_id = std_concept_id,
+                                   ancestor_concept_name = std_concept_name)
   probe %>%
     inner_join(vocabulary_tbl('concept_ancestor'),.,
-               by = c('ancestor_concept_id' = 'std_concept_id'),
+               by = 'ancestor_concept_id',
                copy = TRUE) %>%
     inner_join(vocabulary_tbl('concept'),
                by = c('descendant_concept_id' = 'concept_id')) %>%
-    select(concept_id = descendant_concept_id,
-           concept_name, concept_code, vocabulary_id,
+    select(std_concept_id = descendant_concept_id,
+           std_concept_name = concept_name,
+           std_concept_code = concept_code,
+           std_vocabulary_id = vocabulary_id,
            ancestor_concept_id) %>%
     distinct() %>%
-    inner_join(std_concepts,
-               by = c('ancestor_concept_id' = 'std_concept_id'),
+    inner_join(probe,
+               by = 'ancestor_concept_id',
                copy = TRUE)
 }
 
