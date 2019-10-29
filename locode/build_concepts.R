@@ -17,7 +17,7 @@ setup <- function() {
   source('code/util_tbl.R')
 }
 
-#' Find OHDSI concept_ids for concept codes
+#' Find OHDSI concept data for concept codes
 #' @md
 #'
 #' Given a set of concept codes and potential vocabularies of origin,
@@ -31,13 +31,34 @@ setup <- function() {
 #' @return A tbl in the vocabulary database with the resulting concept
 #'   information, including `concept_id`, `concept_code`, `concept_name`,
 #'   and `vocabulary_id`.  The original `description` is included as well.
-find_concepts <- function(codes, vocabularies) {
+find_concepts_from_codes <- function(codes, vocabularies) {
   vocabulary_tbl('concept') %>%
     filter(is.na(invalid_reason),
            vocabulary_id %in% vocabularies) %>%
     inner_join(codes, by = c('concept_code' = 'code'), copy = TRUE) %>%
     select(concept_code, description, concept_id, concept_name, vocabulary_id)
 }
+
+#' Find OHDSI concept data for concept IDs
+#' @md
+#'
+#' Given a set of concept IDs, find the concept table entries for the codes.
+#'
+#' @param codes A tbl with the concept IDs in the `concept_id` column
+#' @param valid_only A Boolean value indicating whether the returned data should contain
+#'   only currently valid concepts.  Defaults to FALSE.
+#'
+#' @return A tbl in the vocabulary database with the resulting concept
+#'   information, including `concept_id`, `concept_code`, `concept_name`,
+#'   and `vocabulary_id`.  The original `description` is included as well.
+find_concepts_from_cids <- function(cids, valid_only = FALSE) {
+  conc <- vocabulary_tbl('concept')
+  if (valid_only) conc <- filter(concept, is.na(invalid_reason))
+  conc %>% inner_join(cids, by = 'concept_id', copy = TRUE) %>%
+    select(concept_id, concept_name, concept_code, vocabulary_id) %>%
+    mutate(description = concept_name)
+}
+
 
 #' Find standard concept_ids
 #' @md
