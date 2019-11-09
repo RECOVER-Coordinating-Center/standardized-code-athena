@@ -5,6 +5,8 @@
 #' The configuration items present in the template should be completed
 #' for all requests.
 #'
+#' @md
+"req_info"
 
 config('title',
        'Title of Project')
@@ -39,5 +41,5 @@ config('subdirs',
 
 # This should not be changed if the request was set up by the
 # new_request script.  If you are setting up manually, edit this
-# to reflect the version of the standard framework repo used.
+# to reflect the version of the standard framework used.
 config('framework_version', '<framework_version>')

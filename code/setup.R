@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
-# Hacks necessary for database support with current libraries
+# Hacks necessary for database support with current libraries.
+# No user-serviceable parts inside.
 
 # OK, Oracle temporary tables aren't temporary; their contents are.
 # So we need to clean them out when we're done.

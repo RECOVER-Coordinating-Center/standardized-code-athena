@@ -1,11 +1,4 @@
-#!/usr/bin/env Rscript
-
 # Top-level code for execution of data request
-#'
-#' The following are typical packages called at startup. Edit as
-#' necessary for your script.
-#'
-#' The following are packages typically required for execution:
 
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(rlang))
@@ -15,18 +8,26 @@ suppressPackageStartupMessages(library(readr))
 # Required for execution using Rscript
 suppressPackageStartupMessages(library(methods))
 
+#' Set up the execution environment
 #'
-#' The .load() function is optional. However, before any query hits
-#'  the database, the function `.env_setup` must be run. The
-#'  `.env_cleanup` should be called *after* the `.enf_setup` function.
-#'  Both should be called ideally before any database activity.
+#' The .load() function sources the R files needed to execute the query
+#' and sets up the execution environment.  In particular, all of the base
+#' framework files, as well as files inthe code_dir with names matching
+#' `cohort_*.R` or `analyze_*.R` will be sourced.
 #'
-#'  Below is an example of how to operationalize this. The .load
-#'  function loads all scripts and the .run function executes all
-#'  scripts.
+#' This function is usually run automatically when the `run.R` file is sourced
+#' to execute the request.  It may also be executed manually during an
+#' interactive session to re-source changed code or to re-establish a connection
+#' to the database.
 #'
-
-
+#' **N.B.** You will almost never have to edit this function.
+#'
+#' @param here The name of the top-level directory for the request.  The default
+#'   is `config('base_dir')` if the config function has been set up, or the
+#'   global variable `base_dir` if not.
+#'
+#' @return The value of `here`.
+#' @md
 .load <- function(here = ifelse(typeof(get('config')) == 'closure',
                                 config('base_dir'), base_dir)) {
     source(file.path(here, 'code', 'config.R'))
@@ -51,9 +52,30 @@ suppressPackageStartupMessages(library(methods))
         config(def, config(paste0('default_', def)))
     }
 
-    base_dir
+    here
 }
 
+#' Execute the request
+#'
+#' This function presumes the environment has been set up, and executes the
+#' steps of the request.
+#'
+#' In addition to performing queries and analyses, the execution path in this
+#' function should include periodic progress messages to the user, and logging
+#' of intermediate totals and timing data through [append_sum()].
+#'
+#' This function is also typically executed automatically, but is separated from
+#' the setup done in [.load()] to facilitate direct invocation during
+#' development and debugging.
+#'
+#' @param base_dir The name of the top-level directory for the request.  The default
+#'   is `config('base_dir')`, which should always be valid after execution of
+#'   [.load()].
+#'
+#' @return The return value is dependent on the content of the request, but is
+#'   typically a structure pointing to some or all of the retrieved data or
+#'   analysis results.  The value is not used by the framework itself.
+#' @md
 .run  <- function(base_dir = config('base_dir')) {
 
   message('Starting execution with framework version ',
@@ -99,19 +121,18 @@ suppressPackageStartupMessages(library(methods))
 
 }
 
+#' Set up and execute a data request
 #'
-#' The run_request executes all the functions required to execute the query.
-#' The `run.R` file calls on run_request and provides the parameters to execute
-#' the query.
+#' This function encapsulates a "production" run of the data request.  It sets
+#' up the environment, executes the request, and cleans up the environment.
+#'
+#' Typically, the `run.R` file calls run_request() when in a production mode.
 #'
 #' @param base_dir Path to the top of the data request files.  This is
-#'   typically specified in the `run.R`.
-#' @param site_info Path to the file containing site-level
-#'   configuration that is typically not request-specific.  Defaults
-#'   to `site/site_info.R` below base_dir.
+#'   typically specified in `run.R`.
 #'
-#' @return The result of .run()
-
+#' @return The result of [.run()].
+#' @md
 run_request <- function(base_dir) {
     base_dir <- .load(base_dir)
     on.exit(.env_cleanup())

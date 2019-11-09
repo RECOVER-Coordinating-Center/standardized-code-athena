@@ -1,7 +1,9 @@
 #!/usr/bin/env Rscript
 
-#' PEDSnet data request package
-#' @md
+#' PEDSnet data request framework
+#'
+#' This file contains the request-specific configuration, and the starting point
+#' for execution, of a standard PEDSnet data request.
 #'
 #' In order to execute this data request, please do the following:
 #'
@@ -9,19 +11,24 @@
 #'     requirements for executing this code, as described in the
 #'     `README.pdf` file distributed with the package.
 #'  2. Insure the appropriate information for your site is in the
-#'     `site_info.R` file located in the same directory as this file.
-#'     You can do so by editing the distributed file directly, or by
-#'     copying over it a `site_info.R` file from a prior request
-#'     executed against the same CDM version; there is no data
-#'     specific to this request in `site_info.R`.
-#'  3. Edit the 3 variables below to provide information about your
+#'     `site_info.R` file designated below. You can do so by editing
+#'     the distributed file directly, or by copying over it a `site_info.R`
+#'     file from a prior request executed against the same CDM version;
+#'     there is no data specific to this request in `site_info.R`.
+#'  3. Edit the variables below to provide information about your
 #'     execution of this request.
 #'  4. Execute this file.
 #'  5. Return the contents of the `results` directory to the PEDSnet
 #'     DCC.
-
-#' Path to the top-level directory of this request package
+#'
+#' Please note that in order to serve as a portable starting point for request
+#' execution, this file contains a mix of configuration settings and executable
+#' code relying on global varibles.  Please do not edit the content outside the
+#' designated configuration settings unless you are familiar with the internals
+#' of the standard request framework, and the potential for distant effects.
 #' @md
+
+#' Please edit: path to the top-level directory of this request package
 #'
 #' This path should point to the top-level directory of the unzipped
 #' data request package.  It will be the parent directory of the
@@ -29,6 +36,7 @@
 #' with a simple path string.  If you don't the program will make a
 #' guess about where the package is located, and will stop with an
 #' error if it can't.
+#' @md
 base_dir <- 'auto-detect'
 
 if (base_dir == 'auto-detect')
@@ -57,41 +65,31 @@ if (base_dir == 'auto-detect')
 source(file.path(base_dir, 'code', 'config.R'))
 config('base_dir', base_dir)
 
-#' Local database configuration information
-#' @md
+#' Please edit: local database configuration information
 #'
-#' The contents of this file describe how to connect to the CDM
-#' database to be used for this data request.  Since the information
-#' doesn't change for a given version of the CDM, you may elect to use
-#' a single copy located elsewhere for multiple data requests.  You
-#' can also choose to edit or copy over the version provided with the
-#' request package.
+#' The contents of this file describe how to connect to the CDM database to be
+#' used for this data request.  By default, it will look for a file named
+#' `site_info.R` in the same directory as this file.  Since the information
+#' doesn't change for a given version of the CDM, you may elect to use a single
+#' copy located elsewhere for multiple data requests.  You can also choose to
+#' edit or copy over the version provided with the request package.
+#' @md
 config('site_info', file.path(base_dir, 'site', 'site_info.R'))
 
-#' Request-specific retention of intermediate tables
-#' @md
+#' Please edit: Request-specific retention of intermediate tables
 #'
 #' This Boolean value can be used to override the `default_retain_intermediates`
 #' setting from site_info.R.  If it is NA, the default is not overridden.
+#' @md
 config('retain_intermediates', NA)
 
-#' Request-specific results schema
-#' @md
+#' Please edit: Request-specific results schema
 #'
 #' Specific schema to which you want intermediate tables to be written
 #' during processing of the request.
 #' If it is `NA`, the default value from site_info.R is used.
-config('results_schema', NA)
-
-#' Request-specific suffix for output
 #' @md
-#'
-#' Unique tag for non-temporary table names created during execution
-#' of this query.  Replace default with ticket number or similar for a
-#' more readable result.  Keep the tag short, given Oracle limits on
-#' table name length.
-config('results_name_tag',
-       paste0('_',paste0(sample(letters, 5), collapse = '')))
+config('results_schema', NA)
 
 #################################################################
 #
@@ -99,21 +97,31 @@ config('results_name_tag',
 #
 #################################################################
 
-#' Request-specific debug output for database operations
+#' Request-specific suffix for output
+#'
+#' Unique tag for non-temporary table names created during execution
+#' of this query.  Replace default with ticket number or similar for a
+#' more readable result.  Keep the tag short, given Oracle limits on
+#' table name length.
 #' @md
+config('results_name_tag',
+       paste0('_',paste0(sample(letters, 5), collapse = '')))
+
+#' Request-specific debug output for database operations
 #'
 #' This Boolean value specifies whether the query log should include
 #' detailed information about execution of SQL queries in the database
+#' @md
 config('db_trace', TRUE)
 
 #' Execution mode
-#' @md
 #'
 #' The intended execution mode for the reuqest.  Recognized values are:
 #'
 #' * `development` - Development and testing still in progress
 #' * `production` - Intended for results generation
 #' * `distribution` - Production version for distribution to remote sites
+#' @md
 config('execution_mode', 'development')
 
 source(file.path(base_dir, 'code', 'driver.R'))

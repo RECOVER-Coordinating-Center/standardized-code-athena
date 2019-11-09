@@ -1,5 +1,3 @@
-#!/usr/bin/env Rscript
-
 if (!exists('req_env')) req_env <- new.env(parent = emptyenv())
 
 #' Retrieve an item of site-specific configuration
@@ -11,6 +9,7 @@ if (!exists('req_env')) req_env <- new.env(parent = emptyenv())
 #'
 #' @return The (possibly new) configuration value, or `NULL` if it
 #'     does not exist.
+#' @md
 config <- function(label, ...) {
     dots <- list(...)
     if (length(dots) > 0)

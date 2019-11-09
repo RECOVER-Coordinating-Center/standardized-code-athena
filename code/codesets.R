@@ -1,12 +1,12 @@
 #!/usr/bin/env Rscript
 
 #' Read a codeset from a CSV file
-#' @md-
 #'
 #' This function uses the codeset name to build a path to a CSV file
-#' in the data request package containing the codeset data.  The default
-#' expects the file to be in the `specs` directory, to have a header,
-#' and to contain four columns:
+#' in the data request package containing the codeset data.
+#'
+#' The default expects the file to be in the spec_dir directory, to have a
+#' header, and to contain four columns:
 #'
 #'  * concept_id - integer
 #'  * concept_name - string
@@ -18,9 +18,10 @@
 #'   directory tree under `specs`, you may prefix it with
 #'   subdirectories.
 #' @param col_types A column specification compatible with
-#'   [readr::read_csv()].  Defaults to `'iccc'`
+#'   [readr::read_csv()].
 #'
 #' @return A [tibble::tibble()] contanining the codeset
+#' @md
 read_codeset <- function(name,
                          col_types = 'iccc') {
     path <- file.path(config('base_dir'), config('subdirs')$spec_dir,
@@ -29,7 +30,6 @@ read_codeset <- function(name,
 }
 
 #' Create a db table with a codeset as per the query
-#' @md
 #'
 #' Reads the named codeset from a CSV file, and creates a like-named
 #' intermediate table in the database with the contents.  The table is
@@ -41,13 +41,13 @@ read_codeset <- function(name,
 #' @param name The name of the codeset
 #' @param col_types A column specification compatible with
 #'   [readr::read_csv()] to be used when reading the codeset file.
-#'   Defaults to `'iccc'`
 #' @param table_name An optional name for the table, if you want it to
-#'   differ from `name`.  Defaults to `name`.
+#'   differ from `name`.
 #' @param db A database connection; you will rarely need to change
-#'   this from the default.  Defaults to `config('db_src')`.
+#'   this from the default.
 #'
 #' @return A [dplyr::tbl()] pointing to the table
+#' @md
 load_codeset <- function(name,
                          col_types = 'iccc',
                          table_name = name,
