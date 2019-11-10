@@ -1,19 +1,21 @@
-#!/usr/bin/env Rscript
-
-.qual_tbl <- function(name, db, schema_tag) {
+# Add a schema, if defined, and do table name substitution based on config
+.qual_name <- function(name, db, schema_tag) {
+  if ( any(class(name) == 'ident_q') ) return(name)
   name_map <- config('table_names')
   name <- ifelse(hasName(name_map, name), name_map[[name]], name)
-  if (! is.na(config(schema_tag))) {
+  if (!is.na(schema_tag) && ! is.na(config(schema_tag))) {
     con <- if (inherits(db, 'src_dbi')) db$con else db
     name <- dbplyr::in_schema(config(schema_tag),
                               DBI::dbQuoteIdentifier(con, name))
   }
-
-  tbl(db, name)
+  name
 }
 
-#' Connect to a CDM data table
-#' @md
+.qual_tbl <-
+  function(name, db, schema_tag) tbl(db, .qual_name(name, db, schema_tag))
+
+
+#' Connect to an existing CDM data table
 #'
 #' @param name The name of the table
 #' @param db The database connection; you will rarely need to specify this.
