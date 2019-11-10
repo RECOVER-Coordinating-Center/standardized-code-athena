@@ -126,50 +126,6 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
             ifelse(temporary, NA, 'results_schema'))
 }
 
-#' Construct a name suitable for a temporary file
-#' @md
-#'
-#' This is a convenience function that performs essentially the same
-#' task as [intermed_name()], except that the returned name is always
-#' intended for a temporary table.
-#'
-#' You should use this function only when you are certain as the
-#' developer that you need to override the user's setting of
-#' `retain_intermediates` and force the use of a temporary table
-#' (e.g. for a large transient intermediate in a complex query).  In
-#' general, it is better to respect the user's setting unless doing so
-#' would result in an error (e.g. name collission) or a dangerous
-#' expenditure of resources (e.g. preserving a very large but
-#' transient resultset)
-#'
-#' @param name The name of the table.  Defaults to a random string.
-#'
-#' @return The resultant name
-temp_name <- function(name = NA) {
-  if (is.na(name)) intermed_name(temporary = TRUE)
-  else intermed_name(name, temporary = TRUE)
-}
-
-#' Construct a name suitable for a permanent file
-#' @md
-#'
-#' This is a convenience function that performs essentially the same
-#' task as [intermed_name()], except that the returned name is always
-#' intended for a persistnet (non-temporary) table.
-#'
-#' You should use this function only for final result tables, or less
-#' commonly when you are certain as the developer that you need to
-#' override the user's setting of `retain_intermediates` and force the
-#' use of a persistent table (e.g. for an intermediate table you will
-#' need to use in a future request).
-#'
-#' @param name The name of the table.  Defaults to a random string.
-#'
-#' @return The resultant name
-results_name <- function(name = NA) {
-  if (is.na(name)) intermed_name(temporary = FALSE)
-  else intermed_name(name, temporary = FALSE)
-}
 
 #' Test whether a table exists in a database, schema-aware
 #'
