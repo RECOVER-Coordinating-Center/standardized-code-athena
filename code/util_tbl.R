@@ -38,9 +38,9 @@ vocabulary_tbl <-
     .qual_tbl(name, db, 'vocabulary_schema')
 
 
-.add_results_name_tag <- function(name) {
-  if ( ! is.na(config('results_name_tag'))) {
-    tag <- config('results_name_tag')
+# Add a request-specific tag to the name, if so configured
+.add_name_tag <- function(name, tag) {
+  if ( ! is.na(tag)) {
     add_tag <- function(x) {
       no_tag <- ! grepl(paste0(tag,'$'), x)
       x[no_tag] <- paste0(x[no_tag], tag)
@@ -57,6 +57,11 @@ vocabulary_tbl <-
   }
   name
 }
+
+.add_local_tag <- function(name) .add_name_tag(name, tag = '_loc')
+.add_results_name_tag <-
+  function(name) .add_name_tag(name, tag = config('results_name_tag'))
+
 #' Connect to a result table
 #'
 #' This function sets up the connection to a database table that was presumably
@@ -113,12 +118,12 @@ results_tbl <- function(name, db = config('db_src'),
 #' @md
 intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                                         collapse = ""),
-                          temporary = ! config('retain_intermediates')) {
-  name <- .add_results_name_tag(name)
-  if ( ! temporary  & ! is.na(config('results_schema')) &
-       ! any(class(name) == 'ident_q') )
-        dbplyr::in_schema(config('results_schema'), name)
-    else name
+                          temporary = ! config('retain_intermediates'),
+                          local = FALSE, no_tag = FALSE) {
+  if (local) name <- .add_local_tag(name)
+  if (! no_tag) name <- .add_results_name_tag(name)
+  .qual_name(name, config('db_src'),
+            ifelse(temporary, NA, 'results_schema'))
 }
 
 #' Construct a name suitable for a temporary file
@@ -433,16 +438,14 @@ output_tbl <- function(data, name = NA, local = FALSE,
   }
 
   if (db) {
+    rname <- intermed_name(name, temporary = FALSE, local = local)
     if (any(class(data)  == 'tbl_sql') &&
         identical(data$src$con, config('db_src'))) {
-      rslt <- compute_new(data, results_name(name),
-                          temporary = FALSE, ...)
+      rslt <- compute_new(data, rname, temporary = FALSE, ...)
     }
     else {
-      rslt <- copy_to_new(config('db_src'), collect_new(data),
-                          results_name(name),
-                          temporary = FALSE,
-                          overwrite = TRUE, ...)
+      rslt <- copy_to_new(config('db_src'), collect_new(data), rname,
+                          temporary = FALSE, overwrite = TRUE, ...)
     }
   }
 
