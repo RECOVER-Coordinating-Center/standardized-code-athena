@@ -1,5 +1,3 @@
-suppressPackageStartupMessages(library(rlang))
-
 if (!exists('req_env')) req_env <- new.env(parent = emptyenv())
 
 #' Retrieve an item of site-specific configuration
@@ -12,7 +10,6 @@ if (!exists('req_env')) req_env <- new.env(parent = emptyenv())
 #'     does not exist.
 #' @md
 config <- function(label, value) {
-  label <- rlang::as_name(enquo(label))
   if (! missing(value)) assign(label, value, pos = req_env)
   invisible(get0(label, envir = req_env))
 }
@@ -24,7 +21,6 @@ config <- function(label, value) {
 #' @return TRUE if the item has been set, and FALSE if not
 #' @md
 config_exists <- function(label) {
-  label <- rlang::as_name(enquo(label))
   exists(label, where = req_env)
 }
 
@@ -38,7 +34,6 @@ config_exists <- function(label) {
 #' @return NULL
 #' @md
 config_rm <- function(label) {
-  label <- rlang::as_name(enquo(label))
   if (config_exists(!! label)) rm(list = label, pos = req_env)
 }
 
