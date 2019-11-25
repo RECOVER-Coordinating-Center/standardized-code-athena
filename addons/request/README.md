@@ -14,9 +14,9 @@ setup.
 To include a file in a data request,
 
 1. copy it to the `code` directory (or other location as specified in the file),
-1. make any modification to it or to other files as specified in the
-file-specific instructions, and
-3. in the uncommon event that the name of the file doesn't start with `cohort_`
-or `analysis_`, make sure that `driver.R` sources it.
+1. make any modification to it or to other files as specified in the 
+   file-specific instructions, and
+1. in the uncommon event that the name of the file doesn't start with `util_`,
+   `cohort_`, or `analyze_`, make sure that `driver.R` sources it.
 
 

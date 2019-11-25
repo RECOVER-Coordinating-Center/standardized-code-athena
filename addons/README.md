@@ -6,4 +6,4 @@ An addon is conceptually simple: it is just a file containing functions that int
 
 Each addon file must begin with a comment bracketed by `### Addon` lines that
 describes the purpose of the addon, and provides any specific instructions for
-setup.   Unless this specifies otherwise, addons in the `request` directory should be copied into `code` for use, and their names should begin with `cohort_` or `analysis_`, while addons in the `reporting` directory should be copied to the main `reporting` directory for use.
+setup.   Unless this specifies otherwise, addons in the `request` directory should be copied into `code` for use, and their names should begin with `util_`(for addons that provide utility functions), `cohort_` (for addons that create parts of cohorts), or `analyze_` (for addons that perform portions of an analysis), while addons in the `reporting` directory should be copied to the main `reporting` directory for use.
