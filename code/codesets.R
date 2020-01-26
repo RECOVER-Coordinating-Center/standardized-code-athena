@@ -37,8 +37,11 @@ read_codeset <- function(name,
 #' Create a db table with a codeset as per the query
 #'
 #' Reads the named codeset from a CSV file, and creates a like-named
-#' intermediate table in the database with the contents.  The table is
-#' indexed on `concept_id`.
+#' intermediate table in the database with the contents.
+#'
+#' You will typically want to construct an index on the principal code column,
+#' and if the codeset is very large, columns you will use to subset it
+#' during use.
 #'
 #' Once a codeset is loaded, it is cached by name, and future calls to
 #' load_codeset() with the same name will return the cached table.
