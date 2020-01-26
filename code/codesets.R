@@ -19,13 +19,18 @@
 #'   subdirectories.
 #' @param col_types A column specification compatible with
 #'   [readr::read_csv()].
+#' @param full_path A Boolean value indicating whether `name` represents a full
+#'   path or a relative file name that should be expanded.
 #'
-#' @return A [tibble::tibble()] contanining the codeset
+#' @return A tbl contanining the codeset
 #' @md
 read_codeset <- function(name,
-                         col_types = 'iccc') {
-    path <- file.path(config('base_dir'), config('subdirs')$spec_dir,
-                      paste0(name, '.csv'))
+                         col_types = 'iccc',
+                         full_path = FALSE) {
+  path <-
+    if_else(full_path, name,
+            file.path(config('base_dir'), config('subdirs')$spec_dir,
+                      paste0(name, '.csv')))
     read_csv(path, col_names = TRUE, col_types = col_types)
 }
 
@@ -38,21 +43,18 @@ read_codeset <- function(name,
 #' Once a codeset is loaded, it is cached by name, and future calls to
 #' load_codeset() with the same name will return the cached table.
 #'
-#' @param name The name of the codeset
-#' @param col_types A column specification compatible with
-#'   [readr::read_csv()] to be used when reading the codeset file.
+#' @inheritParams read_codeset
 #' @param table_name An optional name for the table, if you want it to
 #'   differ from `name`.
-#' @param db A database connection; you will rarely need to change
-#'   this from the default.
+#' @param indexes A list of columns on which indexes should be created.
 #'
-#' @return A [dplyr::tbl()] pointing to the table
+#' @return A tbl pointing to the table in the database
 #' @md
 load_codeset <- function(name,
                          col_types = 'iccc',
                          table_name = name,
-                         db = config('db_src'),
-                         indexes = list('concept_id')) {
+                         indexes = list('concept_id'),
+                         full_path = FALSE) {
 
   if (is.null(config('_codesets'))) config('_codesets', list())
   cache <- config('_codesets')
