@@ -3,9 +3,10 @@
   if ( any(class(name) == 'ident_q') ) return(name)
   name_map <- config('table_names')
   name <- ifelse(hasName(name_map, name), name_map[[name]], name)
-  if (!is.na(schema_tag) && ! is.na(config(schema_tag))) {
+  if (! is.na(schema_tag)) {
+    if (config_exists(schema_tag)) schema_tag <- config(schema_tag)
     con <- if (inherits(db, 'src_dbi')) db$con else db
-    name <- dbplyr::in_schema(config(schema_tag),
+    name <- dbplyr::in_schema(schema_tag,
                               DBI::dbQuoteIdentifier(con, name))
   }
   name
