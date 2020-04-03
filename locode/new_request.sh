@@ -5,8 +5,8 @@
 # Usage: /path/to/new_request.sh dir_name
 
 target=${1:-new_request}
-if [[ $(ls "$target"/* 2>/dev/null) != '' || \
-      $(ls "$target"/.[a-zA-Z0-9]* 2>/dev/null | grep -v ^.git) != '' ]]
+if [[ ! -z $(ls -d "$target"/* 2>/dev/null)  || \
+      ! -z $(ls -d "$target"/.[a-zA-Z0-9]* 2>/dev/null | grep -v /.git\$ ) ]]
 then
     echo >&2 "Target directory $target already has content."
     exit 1
