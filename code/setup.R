@@ -77,7 +77,7 @@
   # List of Oracle "temp" tables that need to be dropped
   config('ora_drop_me', character(0))
 
-  DBI::dbExecute(db), "alter session set nls_date_format = 'YYYY-MM-DD'")
+  DBI::dbExecute(db, "alter session set nls_date_format = 'YYYY-MM-DD'")
 
   assignInNamespace('db_save_query.DBIConnection',
                     function (con, sql, name, temporary = TRUE, ...) {
