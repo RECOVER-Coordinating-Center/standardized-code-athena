@@ -68,8 +68,7 @@ load_codeset <- function(name,
   codes <-
     copy_to_new(db,
                 read_codeset(name, col_types),
-                name = intermed_name(table_name),
-                temporary = ! config('retain_intermediates'),
+                name = table_name,
                 overwrite = TRUE,
                 indexes = indexes)
   cache[[name]] <- codes
