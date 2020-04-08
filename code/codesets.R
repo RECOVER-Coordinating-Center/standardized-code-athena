@@ -50,6 +50,7 @@ read_codeset <- function(name,
 #' @param table_name An optional name for the table, if you want it to
 #'   differ from `name`.
 #' @param indexes A list of columns on which indexes should be created.
+#' @param db A connection to the database into which to load the codeset.
 #'
 #' @return A tbl pointing to the table in the database
 #' @md
@@ -57,7 +58,8 @@ load_codeset <- function(name,
                          col_types = 'iccc',
                          table_name = name,
                          indexes = list('concept_id'),
-                         full_path = FALSE) {
+                         full_path = FALSE,
+                         db = config('db_src')) {
 
   if (is.null(config('_codesets'))) config('_codesets', list())
   cache <- config('_codesets')
