@@ -72,5 +72,6 @@ load_codeset <- function(name,
                 overwrite = TRUE,
                 indexes = indexes)
   cache[[name]] <- codes
+  config('_codesets', cache)
   codes
 }
