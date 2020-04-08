@@ -75,3 +75,49 @@ load_codeset <- function(name,
   config('_codesets', cache)
   codes
 }
+
+
+#' Find descendants of a codeset's elements
+#'
+#' Given a codeset in the database with (presumably standard) codes listed in
+#' `concept_id`, create a new codeset with descendants.  By default, the new
+#' codeset takes its name from the original, with `_exp` added.
+#'
+#' Note that this function is intended primarily for expanding a codeset
+#' containing high-level terms during query execution.  For a similar method
+#' better suited to construction of codesets to be saved for later use, see
+#' [expand_codeset()] in `locode/build_concepts.R`.
+#'
+#' @param codeset A tbl containing the starting codeset
+#' @param table_name The name to give the expanded codeset, if you're not happy
+#'   with the default.
+#'
+#' @return A tbl containing the expanded codeset, with the standard 4 columns
+#'   (see above), indexed on `concept_id`.
+#' @md
+get_descendants <- function(codeset, table_name = NA) {
+  if (is.na(table_name)) {
+    table_name <- dbplyr:::tbl_desc(codeset)
+    table_name <- unlist(regmatches(table_name,
+                                    regexec('(\\w+)>', table_name,
+                                            perl = TRUE)))[2]
+    table_name <- paste0(table_name, '_exp')
+  }
+
+ if (is.null(config('_codesets'))) config('_codesets', list())
+  cache <- config('_codesets')
+  if (! is.null(cache[[table_name]])) return(cache[[table_name]])
+
+  codes <- vocabulary_tbl('concept_ancestor') %>%
+    inner_join(codeset, by = c('ancestor_concept_id' = 'concept_id')) %>%
+    select(descendant_concept_id) %>%
+    inner_join(vocabulary_tbl('concept'),
+               by = c('descendant_concept_id' = 'concept_id')) %>%
+    select(concept_id = descendant_concept_id, concept_name, concept_code,
+           vocabulary_id) %>%
+    distinct() %>%
+    compute_new(indexes = list('concept_id'), name = table_name)
+  cache[[table_name]] <- codes
+  config('_codesets', cache)
+  codes
+}
