@@ -34,6 +34,9 @@ read_codeset <- function(name,
     read_csv(path, col_names = TRUE, col_types = col_types)
 }
 
+# Invalidate cache when run starts
+config_rm('_codesets')
+
 #' Create a db table with a codeset as per the query
 #'
 #' Reads the named codeset from a CSV file, and creates a like-named
