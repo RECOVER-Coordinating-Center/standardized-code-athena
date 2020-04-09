@@ -192,8 +192,8 @@ dates_to_ages <- function(cohort,
   }
 
   cohort %>%
-    mutate_at(vars(ends_with('_date')), funs(age = (. - birth_dt))) %>%
-    rename_at(vars(ends_with('_date_age')), funs(sub('_date','',.))) %>%
+    mutate_at(vars(ends_with('_date')), list(age = ~(. - birth_dt))) %>%
+    rename_at(vars(ends_with('_date_age')), list(~sub('_date', '', .))) %>%
     select_at(vars(-ends_with('_date'))) %>%
     select_at(vars(-ends_with('_datetime'))) %>%
     select_at(vars(-ends_with('_time'))) %>%
