@@ -34,7 +34,7 @@ config_exists <- function(label) {
 #' @return NULL
 #' @md
 config_rm <- function(label) {
-  if (config_exists(!! label)) rm(list = label, pos = req_env)
+  if (config_exists(label)) rm(list = label, pos = req_env)
 }
 
 #' Retrieve a handle for accessing configuration items
