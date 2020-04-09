@@ -16,6 +16,7 @@
 "site_info.R"
 
 #' Your site's name.
+#' For technical reasons, it should be lowercase.
 #' @md
 config('site', 'site_name')
 
