@@ -191,13 +191,23 @@ dates_to_ages <- function(cohort,
                      birth_dt = sql('cast("birth_datetime" as date)'))
   }
 
-  cohort %>%
+  cohort <- cohort %>%
     mutate_at(vars(ends_with('_date')), list(age = ~(. - birth_dt))) %>%
     rename_at(vars(ends_with('_date_age')), list(~sub('_date', '', .))) %>%
     select_at(vars(-ends_with('_date'))) %>%
     select_at(vars(-ends_with('_datetime'))) %>%
     select_at(vars(-ends_with('_time'))) %>%
     select(-birth_dt)
+
+
+  # Fix mutate_at()'s "helpful" removal of source column name when there is
+  # only one column changed
+  dates <- grep('_date', cohort_vars, value = TRUE)
+  if (length(dates) == 1) {
+    agenew <- sub('_date', '_age',dates[1])
+    cohort <- cohort %>% rename(!! agenew := age)
+  }
+  cohort
 }
 
 
