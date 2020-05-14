@@ -106,6 +106,7 @@ config('results_schema', NA)
 #' @md
 config('results_name_tag',
        paste0('_',paste0(sample(letters, 5), collapse = '')))
+config('local_name_tag', '_loc')
 
 #' Request-specific debug output for database operations
 #'

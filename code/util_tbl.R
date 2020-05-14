@@ -59,10 +59,6 @@ vocabulary_tbl <-
   name
 }
 
-.add_local_tag <- function(name) .add_name_tag(name, tag = '_loc')
-.add_results_name_tag <-
-  function(name) .add_name_tag(name, tag = config('results_name_tag'))
-
 #' Connect to a result table
 #'
 #' This function sets up the connection to a database table that was presumably
@@ -72,17 +68,18 @@ vocabulary_tbl <-
 #'
 #' @param name The name of the table
 #' @param db The database connection; you will rarely need to specify this.
-#' @param local Treat the table name as a local result
-#' @param no_tag Do not add the request tag to the table name.
+#' @param results_tag The request tag to add to the table name (see [intermed_name()]).
+#' @param local_tag The local tag to add to the table name (see [intermed_name()]).
 #'
 #' @return A [dplyr::tbl()]] pointing to the table
 #' @seealso [intermed_name()], for more information on how the table
 #'   specification is determined.
 #' @md
 results_tbl <- function(name, db = config('db_src'),
-                        no_tag = FALSE, local = FALSE) {
+                        results_tag =  TRUE, local_tag = FALSE) {
     .qual_tbl(intermed_name(name, temporary = FALSE,
-                            local = local, no_tag = no_tag),
+                            results_tag = results_tag,
+                            local_tag = local_tag),
               db, 'results_schema')
 }
 
@@ -112,17 +109,30 @@ results_tbl <- function(name, db = config('db_src'),
 #' @param name The name of the table.
 #' @param temporary Logical indicating whether the table is temporary.  For some
 #'   database systems, this means it must not be schema-qualified.
-#' @param local Apply the naming convention for table.
-#' @param no_tag Do not add the request tag to the table name.
+#' @param results_tag The request tag to add to the table name.  If NA or a
+#'   logically false value, no tag is added.  If a character string, that is
+#'   used as the tag.  Otherwise, the `config('results_name_tag')` string is
+#'   used.
+#' @param local_tag The local tag to add to the table name.   If NA or a
+#'   logically false value, no tag is added.  If a character string, that is
+#'   used as the tag.  Otherwise, the `config('local_name_tag')` string is
+#'   used.
 #'
 #' @return The resultant name
 #' @md
 intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                                         collapse = ""),
                           temporary = ! config('retain_intermediates'),
-                          local = FALSE, no_tag = FALSE) {
-  if (local) name <- .add_local_tag(name)
-  if (! no_tag) name <- .add_results_name_tag(name)
+                          results_tag =  TRUE,
+                          local_tag = NA) {
+  if (! is.na(local_tag) && (is.character(local_tag) || local_tag)) {
+    if (! is.character(local_tag)) local_tag <- config('local_name_tag')
+    name <- .add_tag(name, tag = local_tag)
+  }
+  if (! is.na(results_tag) && (is.character(results_tag) || results_tag)) {
+    if (! is.character(results_tag)) results_tag <- config('results_name_tag')
+    name <- .add_name_tag(name, tag = results_tag)
+  }
   .qual_name(name, config('db_src'),
             ifelse(temporary, NA, 'results_schema'))
 }
@@ -364,19 +374,19 @@ copy_to_new <- function(dest = config('db_src'), df,
 #' because you know it will be used in a future request).
 #'
 #' @param data The tbl to write.
-#' @param name The name (only) of the ouptut.  Defaults to the name of
-#'   `data`.
-#' @param local A Boolean value indicating whether the data should be
-#'   written to a local-only location, which is not typically returned
-#'   with query results.
-#' @param file An indicator of whether the data should be written out
-#'   as a CSV file.  If it is FALSE, no file will be written. If it is
-#'   TRUE, a CSV file will be written named `name`, with a `.csv`
-#'   suffix appended.
-#' @param db A Boolean indicator of whether the data should be written
-#'   to a results table in the database.
-#' @param ... Additional arguments passed to the database table
-#'   creation function.
+#' @param name The name (only) of the ouptut.  Defaults to the name of `data`.
+#' @param local A value indicating whether the data should be written to a
+#'   local-only location, which is not typically returned with query results.
+#' @param file An indicator of whether the data should be written out as a CSV
+#'   file.  If it is FALSE, no file will be written. If it is TRUE, a CSV file
+#'   will be written named `name`, with a `.csv` suffix appended.
+#' @param db A Boolean indicator of whether the data should be written to a
+#'   results table in the database.
+#' @param results_tag A value indicating whether to add a request tag to the
+#'   output name (see [intermed_name()]) iff the results are written to the
+#'   database.
+#' @param ... Additional arguments passed to the database table creation
+#'   function.
 #'
 #' @return The result of the operation, typically a copy of data,
 #'   possibly collect()ed.
@@ -387,7 +397,8 @@ output_tbl <- function(data, name = NA, local = FALSE,
                        file = ifelse(config('execution_mode') !=
                                        'development', TRUE, FALSE),
                        db = ifelse(config('execution_mode') !=
-                                     'distribution', TRUE, FALSE), ...) {
+                                     'distribution', TRUE, FALSE),
+                       results_tag = TRUE, ...) {
   if (is.na(name)) name <- quo_name(enquo(data))
 
   if (file) {
@@ -395,7 +406,8 @@ output_tbl <- function(data, name = NA, local = FALSE,
   }
 
   if (db) {
-    rname <- intermed_name(name, temporary = FALSE, local = local)
+    rname <- intermed_name(name, temporary = FALSE,
+                           results_tag = results_tag, local_tag = local)
     if (any(class(data)  == 'tbl_sql') &&
         identical(data$src$con, config('db_src'))) {
       rslt <- compute_new(data, rname, temporary = FALSE, ...)
