@@ -40,7 +40,7 @@ config('site', 'site_name')
 #' @md
 config('db_src', {
   # require(Argos);
-  # src_argos('argos_pedsnet')
+  # src_argos(Sys.getenv('PEDSNET_DB_SRC_CONFIG_BASE', unset = 'argos_pedsnet'))
 })
 
 #' Name of the schema, if any, to be prepended to CDM fact table names.
