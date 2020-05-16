@@ -3,7 +3,6 @@
 require(readr)
 require(stringr)
 require(dplyr)
-require(Argos)
 
 #' Set up environment
 #' @md
