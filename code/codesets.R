@@ -64,18 +64,23 @@ load_codeset <- function(name,
                          full_path = FALSE,
                          db = config('db_src')) {
 
-  if (is.null(config('_codesets'))) config('_codesets', list())
-  cache <- config('_codesets')
-  if (! is.null(cache[[name]])) return(cache[[name]])
-
+  if (config('cache_enabled')) {
+    if (is.null(config('_codesets'))) config('_codesets', list())
+    cache <- config('_codesets')
+    if (! is.null(cache[[name]])) return(cache[[name]])
+  }
   codes <-
     copy_to_new(db,
                 read_codeset(name, col_types),
                 name = table_name,
                 overwrite = TRUE,
                 indexes = indexes)
-  cache[[name]] <- codes
-  config('_codesets', cache)
+
+  if (config('cache_enabled')) {
+    cache[[name]] <- codes
+    config('_codesets', cache)
+  }
+
   codes
 }
 

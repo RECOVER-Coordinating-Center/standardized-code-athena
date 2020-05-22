@@ -108,13 +108,6 @@ config('results_name_tag',
        paste0('_',paste0(sample(letters, 5), collapse = '')))
 config('local_name_tag', '_loc')
 
-#' Request-specific debug output for database operations
-#'
-#' This Boolean value specifies whether the query log should include
-#' detailed information about execution of SQL queries in the database
-#' @md
-config('db_trace', TRUE)
-
 #' Execution mode
 #'
 #' The intended execution mode for the reuqest.  Recognized values are:
@@ -124,6 +117,21 @@ config('db_trace', TRUE)
 #' * `distribution` - Production version for distribution to remote sites
 #' @md
 config('execution_mode', 'development')
+
+#' Request-specific debug output for database operations
+#'
+#' This Boolean value specifies whether the query log should include
+#' detailed information about execution of SQL queries in the database
+#' @md
+config('db_trace', TRUE)
+
+#' Request-specific caching of loaded codesets
+#'
+#' This Boolean value specifies whether repeated attempts to load the same
+#' codeset should use a cached value rather than reloading.  This yields a
+#' potentially significant savings in memory and time.
+#' @md
+config('cache_enabled', config('execution_mode') != 'development')
 
 source(file.path(base_dir, 'code', 'driver.R'))
 
