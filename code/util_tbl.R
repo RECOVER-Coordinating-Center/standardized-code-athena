@@ -127,7 +127,7 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                           local_tag = NA) {
   if (! is.na(local_tag) && (is.character(local_tag) || local_tag)) {
     if (! is.character(local_tag)) local_tag <- config('local_name_tag')
-    name <- .add_tag(name, tag = local_tag)
+    name <- .add_name_tag(name, tag = local_tag)
   }
   if (! is.na(results_tag) && (is.character(results_tag) || results_tag)) {
     if (! is.character(results_tag)) results_tag <- config('results_name_tag')
