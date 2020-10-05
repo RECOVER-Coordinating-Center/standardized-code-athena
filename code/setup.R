@@ -7,8 +7,9 @@
 # So we need to clean them out when we're done.
 .env_cleanup <- function(db = config('db_src')) {
 
-  if ( ! is.null(config('execution_mode')) &&
-         config('execution_mode') == 'distribution' ) {
+  if ( ! is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) && 
+       ! is.null(config('execution_mode')) &&
+       config('execution_mode') == 'distribution' ) {
     sink()
     sink(type = 'message')
   }
@@ -23,8 +24,9 @@
 
 .env_setup <- function(db = config('db_src')) {
 
-  if ( ! is.null(config('execution_mode')) &&
-         config('execution_mode') == 'distribution' ) {
+  if ( ! is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) &&
+       ! is.null(config('execution_mode')) &&
+       config('execution_mode') == 'distribution' ) {
     logf <- file(file.path(base_dir,
                            config('subdirs')$result_dir,
                            paste0(config('site'), '.log')), open = 'wt')
