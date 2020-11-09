@@ -7,7 +7,7 @@
 # So we need to clean them out when we're done.
 .env_cleanup <- function(db = config('db_src')) {
 
-  if ( ! is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) && 
+  if ( ! is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) &&
        ! is.null(config('execution_mode')) &&
        config('execution_mode') == 'distribution' ) {
     sink()
@@ -60,17 +60,20 @@
 }
 
 .pq_env_setup <- function(db = config('db_src')) {
-  assignInNamespace('db_has_table.DBIConnection',
-                    function(con, table, ...) db_exists_table(con, table),
-                    ns = 'dbplyr')
+  if (packageVersion('dbplyr') < '2.0.0') {
+    assignInNamespace('db_has_table.DBIConnection',
+                      function(con, table, ...) db_exists_table(con, table),
+                      ns = 'dbplyr')
+  }
 }
 .pq_env_cleanup <- function(db = config('db_src')) invisible(TRUE)
 
 .pgsql_env_setup <- function(db = config('db_src')) {
-  assignInNamespace('db_has_table.PostgreSQLConnection',
-                    function(con, table, ...) db_exists_table(con, table),
-                    ns = 'dbplyr')
-
+  if (packageVersion('dbplyr') < '2.0.0') {
+    assignInNamespace('db_has_table.PostgreSQLConnection',
+                      function(con, table, ...) db_exists_table(con, table),
+                      ns = 'dbplyr')
+  }
 }
 .pgsql_env_cleanup <- function(db = config('db_src')) invisible(TRUE)
 

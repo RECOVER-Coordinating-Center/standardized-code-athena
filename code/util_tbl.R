@@ -5,9 +5,11 @@
   name <- ifelse(hasName(name_map, name), name_map[[name]], name)
   if (! is.na(schema_tag)) {
     if (config_exists(schema_tag)) schema_tag <- config(schema_tag)
-    con <- if (inherits(db, 'src_dbi')) db$con else db
-    name <- dbplyr::in_schema(schema_tag,
-                              DBI::dbQuoteIdentifier(con, name))
+    if (packageVersion('dbplyr') < '2.0.0') {
+      con <- if (inherits(db, 'src_dbi')) db$con else db
+      name <- DBI::dbQuoteIdentifier(con, name)
+    }
+    name <- dbplyr::in_schema(schema_tag,name)
   }
   name
 }
