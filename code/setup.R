@@ -131,7 +131,7 @@
                       # separator, and we break apart the string
                       # accordingly.
                       if (any(class(con) == 'OraConnection') &
-                          any(class(tabname) == 'ident_q') &
+                          inherits(tabname, c('ident_q', 'dbplyr_schema')) &
                           any(grepl('.', tabname, fixed = TRUE))) {
                         parts <- gsub('"', '', dbplyr::as.sql(tabname), fixed = TRUE)
                         parts <- regmatches(parts,
@@ -161,7 +161,7 @@
                         if (temporary) config('ora_drop_me',
                                               append(config('ora_drop_me'), tabname))
                         schema <- NULL
-                        if (any(class(tabname) == 'ident_q') &
+                        if (inherits(tabname, c('ident_q', 'dbplyr_schema')) &
                             any(grepl('.', tabname, fixed = TRUE))) {
                           parts <- gsub('"', '', dbplyr::as.sql(tabname), fixed = TRUE)
                           parts <- regmatches(parts,
@@ -222,15 +222,16 @@
                       invisible('None')
                     }, ns = 'dbplyr')
 
-  assignInNamespace('in_schema',
-                    function(schema, table) {
-                      ei <- function(x)
-                        if (inherits(x, c('ident_q', 'SQL')))
-                          x
-                      else
-                        dbplyr::escape(dbplyr::ident(x), con = config('db_src'))
-                      dbplyr::ident_q(paste0(ei(schema), '.', ei(table)))
-                    }, ns = 'dbplyr')
+  if (packageVersion('dbplyr') < '2.0.0')
+    assignInNamespace('in_schema',
+                      function(schema, table) {
+                        ei <- function(x)
+                          if (inherits(x, c('ident_q', 'SQL')))
+                            x
+                        else
+                          dbplyr::escape(dbplyr::ident(x), con = config('db_src'))
+                        dbplyr::ident_q(paste0(ei(schema), '.', ei(table)))
+                      }, ns = 'dbplyr')
 
   invisible(TRUE)
 }

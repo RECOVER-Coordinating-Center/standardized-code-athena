@@ -1,6 +1,6 @@
 # Add a schema, if defined, and do table name substitution based on config
 .qual_name <- function(name, db, schema_tag) {
-  if ( any(class(name) == 'ident_q') ) return(name)
+  if (inherits(name, c('ident_q', 'dbplyr_schema'))) return(name)
   name_map <- config('table_names')
   name <- ifelse(hasName(name_map, name), name_map[[name]], name)
   if (! is.na(schema_tag)) {
@@ -49,7 +49,7 @@ vocabulary_tbl <-
       x[no_tag] <- paste0(x[no_tag], tag)
       x
     }
-    if (any(class(name) == 'ident_q') ) {
+    if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
       # Best guess - works but relies on stringification of dbplyr::in_schema()
       parts <- regmatches(name, regexec('^"*(.+?)"*\\."*(.+?)"*$', name))
       name <- dbplyr::in_schema(parts[[1]][2], add_tag(parts[[1]][3]))
@@ -154,7 +154,7 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
 #' @md
 db_exists_table <- function(db, table) {
   con <- if (inherits(db, 'src_dbi')) db$con else db
-  if (any(class(table) == 'ident_q')) {
+  if (inherits(table, c('ident_q', 'dbplyr_schema'))) {
     elts <- gsub('"', '', unlist(strsplit(table, '.', fixed = TRUE)))
   }
   else {
@@ -231,7 +231,7 @@ compute_new <- function(tblx,
                         temporary = ! config('retain_intermediates'),
                         ...) {
     con <- if (inherits(tblx$src, 'src_dbi')) tblx$src$con else tblx$src
-    if (!any(class(name) == 'ident_q') && length(name) == 1) {
+    if (!inherits(name, c('ident_q', 'dbplyr_schema')) && length(name) == 1) {
       name <- gsub('\\s+','_', name, perl = TRUE)
       name <- intermed_name(name, temporary)
     }
