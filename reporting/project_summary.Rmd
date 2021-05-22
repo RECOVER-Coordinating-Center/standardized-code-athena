@@ -1,25 +1,39 @@
 ---
 title: "Study Summary"
 output:
-  pdf_document: default
-  html_notebook: default
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_collapsed: yes
+    toc_float: yes
 ---
 
 # PEDSnet Data Request
 
 ```{r include=FALSE}
+# Default taken from R notebook behavior: when knitting, wd will always be location of notebook
+base_dir <- '..'
+Sys.setenv(PEDSNET_SKIP_REQUEST_EXECUTION=1)
+try(source('../site/run.R')) # May not be able to make db connection
+
+# Set to "local" to read data from ../results, or another value to read from db
+data_source <- if_else(config('execution_mode') == 'distribution', 'local', 'not_local')
+
 require(tibble)
 require(knitr)
-source('../code/driver.R')
-source('../code/config.R')
-source('../code/req_info.R')
-source('../code/setup.R')
-source('../code/util_tbl.R')
-source('../code/setup.R')
-source('../site/site_info.R')
-source('./summary_functions.R')
+require(kableExtra)
+require(readr)
 
-.env_setup()
+get_results <- function(tbl_name) {
+  if (data_source == 'local') {
+    rslt <- read_csv(paste0('../results/', tbl_name, '.csv'))
+  }
+  else {
+    rslt <- results_tbl(tbl_name) %>% collect()
+  }
+  rslt
+}
+
 ```
 
 ## Request Information
