@@ -115,46 +115,6 @@
                         dbBegin(con)
                     }, ns = 'dbplyr')
 
-  assignInNamespace('db_drop_table.OraConnection',
-                    function(con, tabname, force = FALSE, ...) {
-                      schema <- NULL
-                      # For Oracle databases, we have a conundrum
-                      # when schema is explicit.  The dbplyr
-                      # implementation stores schema and table as
-                      # a dot-separated string, while the ROracle
-                      # implementation requires schema be passed
-                      # using a separate parameter and the table
-                      # name be bare.  We try to accommodate this
-                      # by assuming that if the dplyr table has
-                      # class ident_q (used when there's a schema
-                      # name), the first dot will be the schema
-                      # separator, and we break apart the string
-                      # accordingly.
-                      if (any(class(con) == 'OraConnection') &
-                          inherits(tabname, c('ident_q', 'dbplyr_schema')) &
-                          any(grepl('.', tabname, fixed = TRUE))) {
-                        parts <- gsub('"', '', dbplyr::as.sql(tabname), fixed = TRUE)
-                        parts <- regmatches(parts,
-                                            regexec('(.+)\\.(.+)', parts,
-                                                    perl = TRUE))[[1]]
-                        tabname <- parts[3]
-                        schema <- parts[2]
-                      }
-                      if (DBI::dbExistsTable(con, name = tabname, schema = schema)) {
-                        ifex <- if (any(class(con) == 'OraConnection'))
-                          dbplyr::sql(' ')
-                        else
-                          dbplyr::sql('IF EXISTS ')
-                        sql <- dbplyr::build_sql(
-                          "DROP TABLE ", if (force) ifex,
-                          DBI::dbQuoteIdentifier(con, tabname),
-                          con = con
-                        )
-                        DBI::dbExecute(con, sql)
-                      }
-                      else 0
-                    }, ns = 'dbplyr')
-
   assignInNamespace('db_write_table.DBIConnection',
                     function(con, tabname, types, values, temporary = TRUE, ...) {
                       if (any(class(con) == 'OraConnection')) {
@@ -242,7 +202,7 @@
   con <- if (inherits(db, 'src_dbi')) db$con else db
   vapply(unique(dm),
          function (t)
-           tryCatch(dplyr:::db_drop_table(con, t),
+           tryCatch(db_remove_table(con, t, temporary = TRUE),
                     error = function(e) { message(t, ' - ', e); 0L }),
          FUN.VALUE = 0L)
 

@@ -1,5 +1,5 @@
 # Add a schema, if defined, and do table name substitution based on config
-.qual_name <- function(name, db, schema_tag) {
+.qual_name <- function(name, schema_tag, db = config('db_src')) {
   if (inherits(name, c('ident_q', 'dbplyr_schema'))) return(name)
   name_map <- config('table_names')
   name <- ifelse(hasName(name_map, name), name_map[[name]], name)
@@ -17,7 +17,8 @@
 }
 
 .qual_tbl <-
-  function(name, db, schema_tag) tbl(db, .qual_name(name, db, schema_tag))
+  function(name, schema_tag, db = config('db_src'))
+    tbl(db, .qual_name(name, schema_tag, db))
 
 
 #' Connect to an existing CDM data table
@@ -29,7 +30,7 @@
 #' @md
 cdm_tbl <-
   function(name, db = config('db_src'))
-    .qual_tbl(name, db, 'cdm_schema')
+    .qual_tbl(name, 'cdm_schema', db)
 
 #' Connect to an existing CDM vocabulary table
 #'
@@ -40,11 +41,11 @@ cdm_tbl <-
 #' @md
 vocabulary_tbl <-
   function(name, db = config('db_src'))
-    .qual_tbl(name, db, 'vocabulary_schema')
+    .qual_tbl(name, 'vocabulary_schema', db)
 
 
 # Add a request-specific tag to the name, if so configured
-.add_name_tag <- function(name, tag) {
+.add_name_tag <- function(name, tag, db = config('db_src')) {
   if ( ! is.na(tag)) {
     add_tag <- function(x) {
       no_tag <- ! grepl(paste0(tag,'$'), x)
@@ -53,6 +54,13 @@ vocabulary_tbl <-
     }
     if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
       # Best guess - works but relies on stringification of dbplyr::in_schema()
+      if (packageVersion('dbplyr') < '2.0.0') {
+        name <- gsub('["`\']', '', dbplyr::as.sql(name))
+      }
+      else {
+        con <- if (inherits(db, 'src_dbi')) db$con else db
+        name <- gsub('["`\']', '', dbplyr::as.sql(name, con))
+      }
       parts <- regmatches(name, regexec('^"*(.+?)"*\\."*(.+?)"*$', name))
       name <- dbplyr::in_schema(parts[[1]][2], add_tag(parts[[1]][3]))
     }
@@ -84,7 +92,7 @@ results_tbl <- function(name, db = config('db_src'),
     .qual_tbl(intermed_name(name, temporary = FALSE,
                             results_tag = results_tag,
                             local_tag = local_tag),
-              db, 'results_schema')
+              'results_schema', db)
 }
 
 #' Construct a (possibly schema-qualified) intermediate result table name
@@ -121,6 +129,8 @@ results_tbl <- function(name, db = config('db_src'),
 #'   logically false value, no tag is added.  If a character string, that is
 #'   used as the tag.  Otherwise, the `config('local_name_tag')` string is
 #'   used.
+#' @param db A database connection, used in more recent versions of dbplyr to
+#'   insure quoting of table names matches what the database expects
 #'
 #' @return The resultant name
 #' @md
@@ -128,17 +138,64 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                                         collapse = ""),
                           temporary = ! config('retain_intermediates'),
                           results_tag =  TRUE,
-                          local_tag = NA) {
+                          local_tag = NA,
+                          db = config('db_src')) {
   if (! is.na(local_tag) && (is.character(local_tag) || local_tag)) {
     if (! is.character(local_tag)) local_tag <- config('local_name_tag')
-    name <- .add_name_tag(name, tag = local_tag)
+    name <- .add_name_tag(name, tag = local_tag, db = db)
   }
   if (! is.na(results_tag) && (is.character(results_tag) || results_tag)) {
     if (! is.character(results_tag)) results_tag <- config('results_name_tag')
-    name <- .add_name_tag(name, tag = results_tag)
+    name <- .add_name_tag(name, tag = results_tag, db = db)
   }
-  .qual_name(name, config('db_src'),
-            ifelse(temporary, NA, 'results_schema'))
+  .qual_name(name, ifelse(temporary, NA, 'results_schema'), db)
+}
+
+#' Drop a table in a database, schema-aware
+#'
+#' This function has the same purpose as [DBI::dbRemoveTable()], but many
+#'  implementations are unable to accommodate a table name created by
+#'  [dbplyr::in_schema()].
+#'
+#' @param db A [dplyr::src()] or DBI connection
+#' @param table The name of the table, or an object created by
+#'   [dbplyr::in_schema()], or a DBI-style path vector
+#' @param tenporary Whether `table` is a temporary table
+#' @param fail_if_missing If TRUE, raise an error if `table` does not exist
+#'
+#' @return TRUE, invisibly, if no error is encountered; an exception is raised
+#'   otherwise
+#' @md
+db_remove_table <- function(db, table, temporary = FALSE, fail_if_missing = FALSE) {
+  con <- if (inherits(db, 'src_dbi')) db$con else db
+  if (inherits(table, c('ident_q', 'dbplyr_schema'))) {
+    elts <- gsub('"', '',
+                 unlist(strsplit(as.character(table), '.', fixed = TRUE)))
+  }
+  else {
+    elts <- table
+  }
+  sql <- paste0('drop table ',
+                ifelse(fail_if_missing, '', 'if exists '))
+  if (any(grepl('ora', class(con), ignore.case = TRUE)) &&
+      length(elts) > 1) {
+    elts <- rev(elts)
+   DBI::dbRemoveTable(con, elts[1], schema = elts[2])
+  }
+  else if (!temporary &&
+             any(class(con) %in% c('PostgreSQLConnection', 'PqConnection')) &&
+             length(elts) > 1) {
+    table <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(db, elts[1]),
+                             '.',
+                             DBI::dbQuoteIdentifier(db, elts[2])))
+    DBI::dbExecute(con, paste0(sql, table))
+  }
+  else {
+    table <- paste0(vapply(elts, function (x) DBI::dbQuoteIdentifier(con, x),
+                           FUN.VALUE = character(1)), collapse = '.')
+    DBI::dbExecute(con, paste0(sql, table))
+  }
+  invisible(TRUE)
 }
 
 
@@ -157,7 +214,8 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
 db_exists_table <- function(db, table) {
   con <- if (inherits(db, 'src_dbi')) db$con else db
   if (inherits(table, c('ident_q', 'dbplyr_schema'))) {
-    elts <- gsub('"', '', unlist(strsplit(table, '.', fixed = TRUE)))
+    elts <- gsub('"', '',
+                 unlist(strsplit(as.character(table), '.', fixed = TRUE)))
   }
   else {
     elts <- table
@@ -237,7 +295,7 @@ compute_new <- function(tblx,
       name <- gsub('\\s+','_', name, perl = TRUE)
       name <- intermed_name(name, temporary)
     }
-    if (db_exists_table(con, name)) dplyr::db_drop_table(con, name)
+    if (db_exists_table(con, name)) db_remove_table(con, name)
     if (config('db_trace')) {
       show_query(tblx)
       explain(tblx)
@@ -325,7 +383,7 @@ copy_to_new <- function(dest = config('db_src'), df,
   if (overwrite &&
       db_exists_table(dest, name)) {
     con <- if (inherits(dest, 'src_dbi')) dest$con else dest
-    dplyr::db_drop_table(con, name)
+    db_remove_table(con, name)
   }
   rslt <- dplyr::copy_to(dest = dest, df = df, name = name,
                          overwrite = overwrite, temporary = temporary,
