@@ -318,26 +318,12 @@ lookback_facts <- function(data,
       paste0(sub('_occurrence$', '', dname, ignore.case = TRUE),
              '_start_date')
   }
-  filt <- data %>%
+  data %>%
     inner_join(select(index_tbl, person_id, !!idq),
                by = link_col,
-               copy = ! same_src(data, index_tbl))
-
-  if (any(class(filt) == 'tbl_sql')) {
-    con <- if (inherits(filt$src, 'src_dbi')) filt$src$con else filt$src
-    filt <- filt %>%
-      filter(between(DBI::dbQuoteIdentifier(con, index_date_col) -
-                       DBI::dbQuoteIdentifier(con, event_date_col),
-                     0L, lookback)) %>%
-      select(-!!idq)
-
-  }
-  else {
-    filt <- filt %>%
-      filter(between(dbplyr::ident(index_date_col) -
-                       dbplyr::ident(event_date_col),
-                     0L, lookback)) %>%
-      select(-!!idq)
-  }
-  filt
+               copy = ! same_src(data, index_tbl)) %>%
+    filter(between(dbplyr::ident(index_date_col) -
+                     dbplyr::ident(event_date_col),
+                   0L, lookback)) %>%
+    select(-!!idq)
 }
