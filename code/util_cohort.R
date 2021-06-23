@@ -311,7 +311,7 @@ lookback_facts <- function(data,
     if (any(class(data) == 'tbl_dbi')) {
       dname  <- dbplyr:::tbl_desc(data)
       dname <- unlist(regmatches(dname,
-                                 regexec('(\\w+)>', dname, perl = TRUE)))[2]
+                                 regexec('(\\w+)"?>', dname, perl = TRUE)))[2]
     }
     if (is.na(dname)) dname <- deparse(substitute(data))
     event_date_col <-
