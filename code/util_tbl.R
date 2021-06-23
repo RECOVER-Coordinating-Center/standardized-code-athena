@@ -157,7 +157,7 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
 #'  [dbplyr::in_schema()].
 #'
 #' @param db A [dplyr::src()] or DBI connection
-#' @param table The name of the table, or an object created by
+#' @param name The name of the table, or an object created by
 #'   [dbplyr::in_schema()], or a DBI-style path vector
 #' @param tenporary Whether `table` is a temporary table
 #' @param fail_if_missing If TRUE, raise an error if `table` does not exist
@@ -165,14 +165,14 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
 #' @return TRUE, invisibly, if no error is encountered; an exception is raised
 #'   otherwise
 #' @md
-db_remove_table <- function(db, table, temporary = FALSE, fail_if_missing = FALSE) {
-  con <- if (inherits(db, 'src_dbi')) db$con else db
-  if (inherits(table, c('ident_q', 'dbplyr_schema'))) {
+db_remove_table <- function(db, name, temporary = FALSE, fail_if_missing = FALSE) {
+  con <- dbi_con(db)
+  if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
     elts <- gsub('"', '',
-                 unlist(strsplit(as.character(table), '.', fixed = TRUE)))
+                 unlist(strsplit(as.character(name), '.', fixed = TRUE)))
   }
   else {
-    elts <- table
+    elts <- name
   }
   sql <- paste0('drop table ',
                 ifelse(fail_if_missing, '', 'if exists '))
@@ -184,15 +184,15 @@ db_remove_table <- function(db, table, temporary = FALSE, fail_if_missing = FALS
   else if (!temporary &&
              any(class(con) %in% c('PostgreSQLConnection', 'PqConnection')) &&
              length(elts) > 1) {
-    table <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(db, elts[1]),
-                             '.',
-                             DBI::dbQuoteIdentifier(db, elts[2])))
-    DBI::dbExecute(con, paste0(sql, table))
+    name <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(db, elts[1]),
+                               '.',
+                               DBI::dbQuoteIdentifier(db, elts[2])))
+    DBI::dbExecute(con, paste0(sql, name))
   }
   else {
-    table <- paste0(vapply(elts, function (x) DBI::dbQuoteIdentifier(con, x),
-                           FUN.VALUE = character(1)), collapse = '.')
-    DBI::dbExecute(con, paste0(sql, table))
+    name <- paste0(vapply(elts, function (x) DBI::dbQuoteIdentifier(con, x),
+                             FUN.VALUE = character(1)), collapse = '.')
+    DBI::dbExecute(con, paste0(sql, name))
   }
   invisible(TRUE)
 }
@@ -214,10 +214,10 @@ db_exists_table <- function(db, name) {
   con <- dbi_con(db)
   if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
     elts <- gsub('"', '',
-                 unlist(strsplit(as.character(table), '.', fixed = TRUE)))
+                 unlist(strsplit(as.character(name), '.', fixed = TRUE)))
   }
   else {
-    elts <- table
+    elts <- name
   }
   if (any(grepl('ora', class(con), ignore.case = TRUE)) &&
       length(elts) > 1) {
