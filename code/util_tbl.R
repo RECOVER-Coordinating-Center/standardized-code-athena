@@ -297,7 +297,10 @@ compute_new <- function(tblx,
     if (config('db_trace')) {
       show_query(tblx)
       explain(tblx)
-      message(' -> ', name)
+      message(' -> ',
+              ifelse(packageVersion('dbplyr') < '2.0.0',
+                     dbplyr::as.sql(name),
+                     dbplyr::as.sql(name, dbi_con(tblx$src))))
       start <- Sys.time()
       message(start)
     }
@@ -374,7 +377,11 @@ copy_to_new <- function(dest = config('db_src'), df,
     start <- Sys.time()
     message(start)
     message('Data: ', deparse(substitute(df)))
-    message('Table name: ', name, ', (temp: ', temporary, ')')
+    message('Table name: ',
+            ifelse(packageVersion('dbplyr') < '2.0.0',
+                   dbplyr::as.sql(name),
+                   dbplyr::as.sql(name, dbi_con(dest))),
+            ' (temp: ', temporary, ')')
     message('Data elements: ', paste(tbl_vars(df), collapse = ','))
     message('Rows: ', NROW(df))
   }
