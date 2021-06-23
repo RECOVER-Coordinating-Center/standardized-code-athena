@@ -7,8 +7,7 @@
     if (config_exists(schema_tag)) schema_tag <- config(schema_tag)
     if (! is.na(schema_tag)) {
       if (packageVersion('dbplyr') < '2.0.0') {
-        con <- if (inherits(db, 'src_dbi')) db$con else db
-        name <- DBI::dbQuoteIdentifier(con, name)
+        name <- DBI::dbQuoteIdentifier(dbi_con(db), name)
       }
       name <- dbplyr::in_schema(schema_tag,name)
     }
@@ -58,8 +57,7 @@ vocabulary_tbl <-
         name <- gsub('["`\']', '', dbplyr::as.sql(name))
       }
       else {
-        con <- if (inherits(db, 'src_dbi')) db$con else db
-        name <- gsub('["`\']', '', dbplyr::as.sql(name, con))
+        name <- gsub('["`\']', '', dbplyr::as.sql(name, dbi_con(db)))
       }
       parts <- regmatches(name, regexec('^"*(.+?)"*\\."*(.+?)"*$', name))
       name <- dbplyr::in_schema(parts[[1]][2], add_tag(parts[[1]][3]))
@@ -211,9 +209,9 @@ db_remove_table <- function(db, table, temporary = FALSE, fail_if_missing = FALS
 #'
 #' @return TRUE if the table exists, and FALSE otherwise.
 #' @md
-db_exists_table <- function(db, table) {
-  con <- if (inherits(db, 'src_dbi')) db$con else db
-  if (inherits(table, c('ident_q', 'dbplyr_schema'))) {
+db_exists_table <- function(db, name) {
+  con <- dbi_con(db)
+  if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
     elts <- gsub('"', '',
                  unlist(strsplit(as.character(table), '.', fixed = TRUE)))
   }
@@ -240,10 +238,10 @@ db_exists_table <- function(db, table) {
   }
   else if (any(class(con) == 'PqConnection') &&
            length(elts) > 1) {
-    table <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(db, elts[1]),
-                             '.',
-                             DBI::dbQuoteIdentifier(db, elts[2])))
-    return(DBI::dbExistsTable(con, table))
+    name <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(con, elts[1]),
+                               '.',
+                               DBI::dbQuoteIdentifier(con, elts[2])))
+    return(DBI::dbExistsTable(con, name))
   }
   else {
     return(DBI::dbExistsTable(con, elts))
@@ -290,12 +288,11 @@ compute_new <- function(tblx,
                                       collapse = ""),
                         temporary = ! config('retain_intermediates'),
                         ...) {
-    con <- if (inherits(tblx$src, 'src_dbi')) tblx$src$con else tblx$src
     if (!inherits(name, c('ident_q', 'dbplyr_schema')) && length(name) == 1) {
       name <- gsub('\\s+','_', name, perl = TRUE)
       name <- intermed_name(name, temporary)
     }
-    if (db_exists_table(con, name)) db_remove_table(con, name)
+    if (db_exists_table(tblx$src, name)) db_remove_table(tblx$src, name)
     if (config('db_trace')) {
       show_query(tblx)
       explain(tblx)
@@ -382,8 +379,7 @@ copy_to_new <- function(dest = config('db_src'), df,
   }
   if (overwrite &&
       db_exists_table(dest, name)) {
-    con <- if (inherits(dest, 'src_dbi')) dest$con else dest
-    db_remove_table(con, name)
+    db_remove_table(dest, name)
   }
   rslt <- dplyr::copy_to(dest = dest, df = df, name = name,
                          overwrite = overwrite, temporary = temporary,
