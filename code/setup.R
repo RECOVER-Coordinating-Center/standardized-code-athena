@@ -110,14 +110,6 @@ dbi_con <- function(db) if (inherits(db, 'src_dbi')) db$con else db
                       name
                     }, ns = 'dbplyr')
 
-  assignInNamespace('db_begin.DBIConnection',
-                    function (con, ...) {
-                      if (any(class(con) == 'OraConnection'))
-                        TRUE
-                      else
-                        dbBegin(con)
-                    }, ns = 'dbplyr')
-
   assignInNamespace('db_write_table.DBIConnection',
                     function(con, tabname, types, values, temporary = TRUE, ...) {
                       if (any(class(con) == 'OraConnection')) {
