@@ -184,9 +184,9 @@ db_remove_table <- function(db, name, temporary = FALSE, fail_if_missing = FALSE
   else if (!temporary &&
              any(class(con) %in% c('PostgreSQLConnection', 'PqConnection')) &&
              length(elts) > 1) {
-    name <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(db, elts[1]),
+    name <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(con, elts[1]),
                                '.',
-                               DBI::dbQuoteIdentifier(db, elts[2])))
+                               DBI::dbQuoteIdentifier(con, elts[2])))
     DBI::dbExecute(con, paste0(sql, name))
   }
   else {
