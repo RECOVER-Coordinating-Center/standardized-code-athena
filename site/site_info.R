@@ -29,9 +29,10 @@ config('site', 'site_name')
 #'
 #' A few notes:
 #'
-#' * You may find it convenient to use the Argos package at
-#'   [https://github.com/baileych/ohdsi-argos] to abstract database connection
-#'   information such as credentials and server names out of this file.
+#' * You may find it convenient to use the
+#'   (srcr)[https://cran.r-project.org/web/packages/srcr/index.html] package
+#'   to abstract database connection information such as credentials and server
+#'   names out of this file.
 #' * If using Oracle, the following are required before loading ROracle, if
 #'   these are not set in the global environment:
 #'     * `Sys.setenv(TZ=Sys.timezone())`
@@ -39,8 +40,9 @@ config('site', 'site_name')
 #'
 #' @md
 config('db_src', {
-  # require(Argos);
-  # src_argos(Sys.getenv('PEDSNET_DB_SRC_CONFIG_BASE', unset = 'argos_pedsnet'))
+  require(srcr);
+  srcr(Sys.getenv('PEDSNET_DB_SRC_CONFIG_BASE',
+                  unset = 'argos_pedsnet_current'))
 })
 
 #' Name of the schema, if any, to be prepended to CDM fact table names.
