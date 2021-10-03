@@ -176,10 +176,14 @@ db_remove_table <- function(db, name, temporary = FALSE, fail_if_missing = FALSE
   }
   sql <- paste0('drop table ',
                 ifelse(fail_if_missing, '', 'if exists '))
-  if (any(grepl('ora', class(con), ignore.case = TRUE)) &&
-      length(elts) > 1) {
+  if (any(grepl('ora', class(con), ignore.case = TRUE))) {
+    if (! db_exists_table(con, name)) return(TRUE)
+    if (length(elts) > 1) {
     elts <- rev(elts)
    DBI::dbRemoveTable(con, elts[1], schema = elts[2])
+    } else {
+      DBI::dbRemoveTable(con, elts[1])
+    }
   }
   else if (!temporary &&
              any(class(con) %in% c('PostgreSQLConnection', 'PqConnection')) &&
