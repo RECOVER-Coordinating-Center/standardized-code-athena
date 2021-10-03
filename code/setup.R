@@ -177,16 +177,22 @@ dbi_con <- function(db) if (inherits(db, 'src_dbi')) db$con else db
                       invisible('None')
                     }, ns = 'dbplyr')
 
-  if (packageVersion('dbplyr') < '2.0.0')
+  if (packageVersion('dbplyr') < '2.0.0') {
     assignInNamespace('in_schema',
                       function(schema, table) {
                         ei <- function(x)
                           if (inherits(x, c('ident_q', 'SQL')))
                             x
                         else
-                          dbplyr::escape(dbplyr::ident(x), con = config('db_src'))
+                          dbplyr::escape(dbplyr::ident(x),
+                                         con = config('db_src'))
                         dbplyr::ident_q(paste0(ei(schema), '.', ei(table)))
                       }, ns = 'dbplyr')
+  } else {
+    assignInNamespace('with_transaction',
+                      function(con, in_transaction, code) { code },
+                      ns = 'dbplyr')
+  }
 
   invisible(TRUE)
 }
