@@ -3,6 +3,9 @@
 # Hacks necessary for database support with current libraries.
 # No user-serviceable parts inside.
 
+# Need to do this for assignInNamespace to work
+require(dbplyr)
+
 # Get DBI-compatible connection handle across dplyr generations
 dbi_con <- function(db) if (inherits(db, 'src_dbi')) db$con else db
 
@@ -88,36 +91,112 @@ dbi_con <- function(db) if (inherits(db, 'src_dbi')) db$con else db
   DBI::dbExecute(db, "alter session set nls_date_format = 'YYYY-MM-DD'")
   DBI::dbExecute(db, "alter session set nls_timestamp_tz_format = 'YYYY-MM-DD HH24:MI:SS TZHTZM'")
 
-  assignInNamespace('db_save_query.DBIConnection',
-                    function (con, sql, name, temporary = TRUE, ...) {
-                      if (temporary) {
-                        if (any(class(con) == 'OraConnection')) {
-                          temptbl <- dbplyr::sql(' ')
-                          config('ora_drop_me',
-                                 append(config('ora_drop_me'), name))
+  if (packageVersion('dbplyr') < '2.0.0') {
+    assignInNamespace('db_save_query.DBIConnection',
+                      function (con, sql, name, temporary = TRUE, ...) {
+                        if (temporary) {
+                          if (any(class(con) == 'OraConnection')) {
+                            temptbl <- dbplyr::sql(' ')
+                            config('ora_drop_me',
+                                   append(config('ora_drop_me'), name))
+                          }
+                          else {
+                            temptbl <- dbplyr::sql('TEMPORARY ')
+                          }
                         }
-                        else {
-                          temptbl <- dbplyr::sql('TEMPORARY ')
+                        tt_sql <- dbplyr::build_sql("CREATE ",
+                                                    if (temporary) temptbl,
+                                                    'TABLE ',
+                                                    dbplyr::as.sql(name, con = con),
+                                                    ' AS ', sql,
+                                                    con = con)
+                        DBI::dbExecute(con, tt_sql)
+                        name
+                      }, ns = 'dbplyr')
+
+    assignInNamespace('db_create_index.DBIConnection',
+                      function(con, tabname, columns, name = NULL,
+                               unique = FALSE, ...) {
+                        assertthat::assert_that(is_string(tabname), is.character(columns))
+
+                        name <- name %||%
+                          gsub('[^A-Za-z0-9_]+', '',
+                               paste0(c(tabname, columns), collapse = "_"))
+                        now <- as.integer(Sys.time())
+                        if (any(class(con) == 'OraConnection') &
+                              nchar(name) > 30) {
+                          # Generate a likely unique, if not very readable, name
+                          name <-
+                            substr(sprintf('ix%d%d_%s%s',
+                                           Sys.getpid(), now,
+                                           paste0(substr(columns,1,1), collapse = ''),
+                                           config('results_name_tag')),
+                                   1, 30)
                         }
-                      }
-                      tt_sql <- dbplyr::build_sql("CREATE ",
-                                                  if (temporary) temptbl,
-                                                  'TABLE ',
-                                                  dbplyr::as.sql(name),
-                                                  ' AS ', sql,
-                                                  con = con)
-                      DBI::dbExecute(con, tt_sql)
-                      name
-                    }, ns = 'dbplyr')
+                        fields <- dbplyr::escape(ident(columns), parens = TRUE, con = con)
+                        sql <- dbplyr::build_sql(
+                          "CREATE ", if (unique) sql("UNIQUE "), "INDEX ",
+                          dbplyr::as.sql(name),
+                          " ON ", dbplyr::as.sql(tabname), " ", fields,
+                          con = con)
+
+                        rslt <- dbExecute(con, sql)
+                        if (any(class(con) == 'OraConnection') &&
+                              as.integer(Sys.time()) == now) Sys.sleep(1)
+                        rslt
+                      }, ns = 'dbplyr')
+  } else {
+    assignInNamespace('sql_query_save.DBIConnection',
+                      function (con, sql, name, temporary = TRUE, ...) {
+                        if (temporary) {
+                          if (any(class(con) == 'OraConnection')) {
+                            temptbl <- dbplyr::sql(' ')
+                            config('ora_drop_me',
+                                   append(config('ora_drop_me'), name))
+                          }
+                          else {
+                            temptbl <- dbplyr::sql('TEMPORARY ')
+                          }
+                        }
+                        build_sql("CREATE ", if (temporary)
+                          temptbl, "TABLE \n", as.sql(name, con), " AS ",
+                          sql, con = con)
+                      }, ns = 'dbplyr')
+
+    assignInNamespace('sql_table_index.DBIConnection',
+                      function (con, table, columns, name = NULL,
+                                unique = FALSE, ...)
+                      {
+                        assertthat::assert_that(is_string(table) | dbplyr:::is.schema(table), is.character(columns))
+                        name <- name %||%
+                          gsub('[^A-Za-z0-9_]+', '',
+                               paste0(c(unclass(table), columns), collapse =
+                                                                    "_"))
+                        if (any(class(con) == 'OraConnection') &
+                              nchar(name) > 30) {
+                          # Generate a likely unique, if not very readable, name
+                          name <- substr(sprintf('ix%d%d_%s%s',
+                                                 Sys.getpid(), as.integer(Sys.time()),
+                                           paste0(substr(columns,1,1), collapse = ''),
+                                           config('results_name_tag')),
+                                   1, 30)
+                        }
+                        fields <- dbplyr::escape(ident(columns), parens = TRUE, con = con)
+                        dbplyr::build_sql("CREATE ", if (unique)
+                          dbplyr::sql("UNIQUE "), "INDEX ", dbplyr::as.sql(name, con = con), " ON ",
+                          dbplyr::as.sql(table, con = con), " ", fields, con = con)
+                      }, ns = 'dbplyr')
+  }
 
   assignInNamespace('db_write_table.DBIConnection',
-                    function(con, tabname, types, values, temporary = TRUE, ...) {
+                    function(con, tabname, types, values, temporary = TRUE,
+                             overwrite = FALSE, ...) {
                       if (any(class(con) == 'OraConnection')) {
                         if (temporary) config('ora_drop_me',
                                               append(config('ora_drop_me'), tabname))
                         schema <- NULL
                         if (inherits(tabname, c('ident_q', 'dbplyr_schema')) &
-                            any(grepl('.', tabname, fixed = TRUE))) {
+                              any(grepl('.', tabname, fixed = TRUE))) {
                           parts <- gsub('"', '', dbplyr::as.sql(tabname), fixed = TRUE)
                           parts <- regmatches(parts,
                                               regexec('(.+)\\.(.+)', parts,
@@ -127,46 +206,16 @@ dbi_con <- function(db) if (inherits(db, 'src_dbi')) db$con else db
                         }
                         DBI::dbWriteTable(con, name = tabname, schema = schema,
                                           value = values, field.types = types,
-                                          temporary = temporary, row.names = FALSE, ...)
+                                          temporary = temporary,
+                                          overwrite = FALSE, row.names = FALSE, ...)
                       }
                       else
                         DBI::dbWriteTable(con,
                                           name = dbplyr::dbi_quote(dbplyr::as.sql(tabname), con),
                                           value = values, field.types = types,
-                                          temporary = temporary, row.names = FALSE, ...)
+                                          temporary = temporary,
+                                          overwrite = FALSE, row.names = FALSE, ...)
                       tabname
-                    }, ns = 'dbplyr')
-
-  assignInNamespace('db_create_index.DBIConnection',
-                    function(con, tabname, columns, name = NULL,
-                             unique = FALSE, ...) {
-                      assertthat::assert_that(is_string(tabname), is.character(columns))
-
-                      name <- name %||%
-                        gsub('[^A-Za-z0-9_]+', '',
-                             paste0(c(tabname, columns), collapse = "_"))
-                      now <- as.integer(Sys.time())
-                      if (any(class(con) == 'OraConnection') &
-                          nchar(name) > 30) {
-                        # Generate a likely unique, if not very readable, name
-                        name <-
-                          substr(sprintf('ix%d%d_%s%s',
-                                         Sys.getpid(), now,
-                                         paste0(substr(columns,1,1), collapse = ''),
-                                         config('results_name_tag')),
-                                 1, 30)
-                      }
-                      fields <- dbplyr::escape(ident(columns), parens = TRUE, con = con)
-                      sql <- dbplyr::build_sql(
-                        "CREATE ", if (unique) sql("UNIQUE "), "INDEX ",
-                        dbplyr::as.sql(name),
-                        " ON ", dbplyr::as.sql(tabname), " ", fields,
-                        con = con)
-
-                      rslt <- dbExecute(con, sql)
-                      if (any(class(con) == 'OraConnection') &&
-                            as.integer(Sys.time()) == now) Sys.sleep(1)
-                      rslt
                     }, ns = 'dbplyr')
 
   # Oracle can obviously produce explain plans, but it requires
