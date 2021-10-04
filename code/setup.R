@@ -30,7 +30,7 @@ dbi_con <- function(db) if (inherits(db, 'src_dbi')) db$con else db
 
 .env_setup <- function(db = config('db_src')) {
 
-  if ( ! is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) &&
+  if ( is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) &&
        ! is.null(config('execution_mode')) &&
        config('execution_mode') == 'distribution' ) {
     logf <- file(file.path(base_dir,
