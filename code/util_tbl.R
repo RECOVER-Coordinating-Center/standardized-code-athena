@@ -156,6 +156,11 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
 #'  implementations are unable to accommodate a table name created by
 #'  [dbplyr::in_schema()].
 #'
+#' Note that `db` is the first parameter, even though the default is almost
+#' always what you wnat, in order to maintain a calling sequence consistent with
+#' what you'd expect from the DBI specification.  So you'll probably want to
+#' call this function as `db_remove_table( name =` _tabname_ `)` most of the time.
+#'
 #' @param db A [dplyr::src()] or DBI connection
 #' @param name The name of the table, or an object created by
 #'   [dbplyr::in_schema()], or a DBI-style path vector
@@ -165,7 +170,8 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
 #' @return TRUE, invisibly, if no error is encountered; an exception is raised
 #'   otherwise
 #' @md
-db_remove_table <- function(db, name, temporary = FALSE, fail_if_missing = FALSE) {
+db_remove_table <- function(db = config('db_src'), name,
+                            temporary = FALSE, fail_if_missing = FALSE) {
   con <- dbi_con(db)
   if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
     elts <- gsub('"', '',
@@ -208,13 +214,18 @@ db_remove_table <- function(db, name, temporary = FALSE, fail_if_missing = FALSE
 #' [dbplyr::db_has_table()], but neither of those are able to test a
 #' table name created by [dbplyr::in_schema()].
 #'
+#' Note that `db` is the first parameter, even though the default is almost
+#' always what you wnat, in order to maintain a calling sequence consistent with
+#' what you'd expect from the DBI specification.  So you'll probably want to
+#' call this function as `db_exists_table( name =` _tabname_ `)` most of the time.
+#'
 #' @param db A [dplyr::src()] or DBI connection
 #' @param name The name of the table, or an object created by
 #'   [dbplyr::in_schema()], or a DBI-style path vector
 #'
 #' @return TRUE if the table exists, and FALSE otherwise.
 #' @md
-db_exists_table <- function(db, name) {
+db_exists_table <- function(db = config('db_src'), name) {
   con <- dbi_con(db)
   if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
     elts <- gsub('"', '',
