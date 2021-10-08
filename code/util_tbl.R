@@ -150,6 +150,32 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
   .qual_name(name, ifelse(temporary, NA, 'results_schema'), db)
 }
 
+#' Construct a fully qualified results table name
+#'
+#' This convenience function behaves similarly to [intermed_name()], except that
+#' the table name must always be provided, and the result is always treated as a
+#' non-temporary table.
+#'
+#' @param name The name of the table.
+#' @param results_tag The request tag to add to the table name.  If NA or a
+#'   logically false value, no tag is added.  If a character string, that is
+#'   used as the tag.  Otherwise, the `config('results_name_tag')` string is
+#'   used.
+#' @param local_tag The local tag to add to the table name.   If NA or a
+#'   logically false value, no tag is added.  If a character string, that is
+#'   used as the tag.  Otherwise, the `config('local_name_tag')` string is
+#'   used.
+#' @param db A database connection, used in more recent versions of dbplyr to
+#'   insure quoting of table names matches what the database expects
+#'
+#' @return The resultant name
+#' @md
+results_name <- function(name, results_tag =  TRUE, local_tag = NA,
+                         db = config('db_src')) {
+  intermed_name(name = name, temporary = FALSE, results_tag = results_tag,
+                local_tag = local_tag, db = db)
+}
+
 #' Drop a table in a database, schema-aware
 #'
 #' This function has the same purpose as [DBI::dbRemoveTable()], but many
