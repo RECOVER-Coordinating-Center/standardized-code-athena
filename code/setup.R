@@ -3,9 +3,6 @@
 # Hacks necessary for database support with current libraries.
 # No user-serviceable parts inside.
 
-# Need to do this for assignInNamespace to work
-require(dbplyr)
-
 # Get DBI-compatible connection handle across dplyr generations
 dbi_con <- function(db) if (inherits(db, 'src_dbi')) db$con else db
 

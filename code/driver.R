@@ -5,6 +5,9 @@ suppressPackageStartupMessages(library(rlang))
 suppressPackageStartupMessages(library(tibble))
 suppressPackageStartupMessages(library(readr))
 
+# Need to do this for assignInNamespace to work
+suppressPackageStartupMessages(library(dbplyr))
+
 # Required for execution using Rscript
 suppressPackageStartupMessages(library(methods))
 
