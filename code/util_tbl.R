@@ -487,8 +487,8 @@ copy_to_new <- function(dest = config('db_src'), df,
 #' @param file An indicator of whether the data should be written out as a CSV
 #'   file.  If it is FALSE, no file will be written. If it is TRUE, a CSV file
 #'   will be written named `name`, with a `.csv` suffix appended.
-#' @param db A Boolean indicator of whether the data should be written to a
-#'   results table in the database.
+#' @param db A database connection, to which to write the results table.  If it
+#'   is FALSE or NA, no database table is written
 #' @param results_tag A value indicating whether to add a request tag to the
 #'   output name (see [intermed_name()]) iff the results are written to the
 #'   database.
@@ -503,8 +503,8 @@ copy_to_new <- function(dest = config('db_src'), df,
 output_tbl <- function(data, name = NA, local = FALSE,
                        file = ifelse(config('execution_mode') !=
                                        'development', TRUE, FALSE),
-                       db = ifelse(config('execution_mode') !=
-                                     'distribution', TRUE, FALSE),
+                       db = if (config('execution_mode') !=
+                                  'distribution') config('db_src') else NA,
                        results_tag = TRUE, ...) {
   if (is.na(name)) name <- quo_name(enquo(data))
 
@@ -512,15 +512,18 @@ output_tbl <- function(data, name = NA, local = FALSE,
     rslt <- .output_csv(data, name, local)
   }
 
-  if (db) {
-    rname <- intermed_name(name, temporary = FALSE,
+  # Conditional logic is a little convoluted here to allow for legacy behavior
+  # of allowing Boolean value for db
+  if ( is.object(db) || (!is.na(db) && db)) {
+    if (is.logical(db)) db <- config('db_src')
+    rname <- intermed_name(name, temporary = FALSE, db = db,
                            results_tag = results_tag, local_tag = local)
     if (any(class(data)  == 'tbl_sql') &&
-        identical(data$src$con, config('db_src'))) {
-      rslt <- compute_new(data, rname, temporary = FALSE, ...)
+        identical(data$src$con, db)) {
+      rslt <- compute_new(data, rname, temporary = FALSE, db = db, ...)
     }
     else {
-      rslt <- copy_to_new(config('db_src'), collect_new(data), rname,
+      rslt <- copy_to_new(db, collect_new(data), rname,
                           temporary = FALSE, overwrite = TRUE, ...)
     }
   }
