@@ -28,39 +28,68 @@
 #' of the standard request framework, and the potential for distant effects.
 #' @md
 
-#' Please edit: path to the top-level directory of this request package
+
+#' Please edit: optional basename of the directory for this request package
+#'
+#' This basename should point to the top-level directory for the request
+#' package, located under whereever you have set `PEDSNET_DATA_REQUEST_ROOT`.
+#' At present, it is only used if you leave `base_dir` at the auto-detect
+#' setting, which is STRONGLY recommended.
+#'
+#' For example, if you keep your data request work in a subdirectory named
+#' "data_science" under your home directory, and now you're starting in on the
+#' MAGICAL trial's feasibility data request, you would
+#'
+#'   1. Set PEDSNET_DATA_REQUEST_ROOT = "$HOME/data_science" in .Renviron
+#'   2. Define req_basename <- 'magical_feasibility'
+#'
+#' If you always rely on running the package with the working directory set to
+#' the package directory, you can skip this, at the cost of portability.
+req_basename <- NA
+
+#' Please don't edit: path to the top-level directory of this request package
 #'
 #' This path should point to the top-level directory of the unzipped
 #' data request package.  It will be the parent directory of the
-#' directory containing this file.  You can replace the value below
-#' with a simple path string.  If you don't the program will make a
-#' guess about where the package is located, and will stop with an
-#' error if it can't.
+#' directory containing this file.
+#'
+#' By default, the program will attempt to determine where the package is
+#' located, based on your setting of the environment variable
+#' PEDSNET_DATA_REQUEST_ROOT (assuming you tend to keep your request work in a
+#' common place). As a convenience, the root defaults to your home directory.
+#'
+#' For portability, it is STRONGLY recommended that you use the auto-detect
+#' mechanism, but in cases of absolute need, you can replace the value below
+#' with a simple path string.
 #' @md
 base_dir <- 'auto-detect'
 
 if (base_dir == 'auto-detect')
     base_dir <-
-        {
-            if (! is.na(Sys.getenv('PEDSNET_DATA_REQUEST_ROOT', unset = NA))) {
-                file.path(Sys.getenv('PEDSNET_DATA_REQUEST_ROOT'), 'OBrien_vWD')
+      {
+        preferred <- Sys.getenv('PEDSNET_DATA_REQUEST_ROOT',
+                                 unset = Sys.getenv('HOME', unset = NA))
+          if (! is.na(preferred) && nchar(preferred) > 0) {
+            if (! is.na(req_basename)) {
+              file.path(preferred, req_basename)
+            } else {
+              preferred
             }
-            else {
-              if (any(file.exists(c('run.R',
-                                    file.path('..', 'site', 'run.R'))))) {
-                    file.path(getwd(), '..')
-                }
-                else {
-                    if (file.exists(file.path('site', 'run.R'))) {
-                        getwd()
-                    }
-                    else {
-                        stop("Can't find package base directory; ",
-                             "set base_dir in site/run.R")
-                    }
-                }
+          }
+        else {
+            if (any(file.exists(c('run.R',
+                                  file.path('..', 'site', 'run.R'))))) {
+              file.path(getwd(), '..')
+            } else {
+              if (file.exists(file.path('site', 'run.R'))) {
+                getwd()
+              } else {
+                stop("Can't find package base directory; ",
+                     "set base_dir in site/run.R")
+              }
             }
-        }
+          }
+      }
 
 source(file.path(base_dir, 'code', 'config.R'))
 config('base_dir', base_dir)
