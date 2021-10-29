@@ -41,8 +41,9 @@ config('site', 'site_name')
 #' @md
 config('db_src', {
   require(srcr);
-  srcr(Sys.getenv('PEDSNET_DB_SRC_CONFIG_BASE',
-                  unset = 'argos_pedsnet_current'))
+  default <- Sys.getenv('PEDSNET_DB_SRC_CONFIG_BASE', unset = NA)
+  if (is.na(default) || nchar(default) == 0) default <- 'argos_pedsnet_current'
+  srcr(default)
 })
 
 #' Name of the schema, if any, to be prepended to CDM fact table names.
