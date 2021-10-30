@@ -12,7 +12,7 @@ then
     exit 1
 fi
 if [[ ! -d "$target" ]]; then mkdir -p "$target"; fi
-target=$(cd "$target"; pwd)
+target_path=$(cd "$target"; pwd)
 
 src=$(dirname $0)
 src=${src:-$PWD}
@@ -23,18 +23,22 @@ then
 fi
 
 cd "$src/.."
-cp -R code  local locode reporting request results site specs "$target"
-cat .gitignore >>"$target/.gitignore"
+cp -R code  local locode reporting request results site specs "$target_path"
+cat .gitignore >>"$target_path/.gitignore"
 vers=$(git log -1 --date=short --format='%h %ad')
 
-cd "$target"
+cd "$target_path"
 sed -e "s/<framework_version>/$vers/" <code/req_info.R >code/$$.tmp && \
     mv -f code/$$.tmp code/req_info.R
+sed -e "s/<basename_unset>/$target/" <code/req_info.R >code/$$.tmp && \
+    mv -f code/$$.tmp code/req_info.R
+sed -e "s/basename <- NA/basename <- '$target'/" <site/run.R >site/$$.tmp && \
+    mv -f site/$$.tmp site/run.R
+
 if [[ $(git status >/dev/null 2>&1; echo $?) -ne 0 ]]; then git init .; fi
 git add .
 git commit -m 'Standard framework'
 
-tbase=$(basename $target)
 echo "
 Setup complete.
 

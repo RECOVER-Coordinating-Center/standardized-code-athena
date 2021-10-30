@@ -17,6 +17,7 @@ config('cdm_version', 1)
 config('enqueued_date', as.Date('2001-01-01'))
 
 config('req_version', 1)
+config('req_basename', '<basename_unset>')
 
 # In most cases, these assignments should not need to be changed.
 # But if for some reason you have altered the layout of the request
