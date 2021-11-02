@@ -45,6 +45,7 @@
 #'
 #' If you always rely on running the package with the working directory set to
 #' the package directory, you can skip this, at the cost of portability.
+#' @md
 req_basename <- NA
 
 #' Please don't edit: path to the top-level directory of this request package
