@@ -68,15 +68,13 @@ base_dir <- 'auto-detect'
 if (base_dir == 'auto-detect')
     base_dir <-
       {
-        preferred <- Sys.getenv('PEDSNET_DATA_REQUEST_ROOT',
-                                 unset = Sys.getenv('HOME', unset = NA))
-          if (! is.na(preferred) && nchar(preferred) > 0) {
-            if (! is.na(req_basename)) {
-              file.path(preferred, req_basename)
-            } else {
-              preferred
-            }
-          }
+       preferred <- Sys.getenv('PEDSNET_DATA_REQUEST_ROOT',
+                                unset = Sys.getenv('HOME', unset = NA))
+        if (! is.na(preferred) && nchar(preferred) > 0 && ! is.na(req_basename))
+          preferred <- file.path(preferred, req_basename)
+        if (file.exists(file.path(preferred, 'site', 'run.R'))) {
+          preferred
+        }
         else {
             if (any(file.exists(c('run.R',
                                   file.path('..', 'site', 'run.R'))))) {
