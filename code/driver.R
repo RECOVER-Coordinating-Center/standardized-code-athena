@@ -86,42 +86,43 @@ suppressPackageStartupMessages(library(methods))
           config('framework_version'))
 
   init_sum(cohort = 'Start', persons = 0)
+  rslt <- list()
 
   message('Insert message here')
-  starter <- first_function(config('db_src')) %>%
-    .compute_new()  #if applicable
+  rslt$starter <- first_function(config('db_src')) %>%
+    # If final table, output here.  If you need a temp or raw table, use
+    # compute_new(), and see below for ID replacement
+    output_tbl(name = 'first_tbl', indexes = list('person_id'))
 
   # counts the number of persons for this part of the query
-  append_sum(cohort = 'Name of first computation or cohort (if feasibility query)',
-             persons = distinct_ct(starter))
+  append_sum(cohort = 'Name of first computation or cohort',
+             persons = distinct_ct(rslt$starter))
 
-  next_cohort <- function_call_for_study(starter) %>%
+  rslt$next_cohort <- function_call_for_study(starter) %>%
     .other_functions_if_applicable('') # if applicable
-  append_sum(cohort = 'Name of second computation or cohort (if feasibility query)',
-             persons = distinct_ct(next_cohort))
+  append_sum(cohort = 'Name of second computation or cohort',
+             persons = distinct_ct(rslt$next_cohort))
 
 
   more_functions_as_needed()
 
 
-  # Simple output to CSV
-  output_tbl(starter, name = 'base_cohort')
-
-  # Alternatively, replace person_ids and write output
-  pers_xwalk <- gen_xwalk(starter, 'person_id')
-  output_tbl(new_id(starter, 'person_id', pers_xwalk, replace = TRUE),
+  # If needed, replace person_ids and write output
+  pers_xwalk <- gen_xwalk(rslt$starter, 'person_id')
+  output_tbl(new_id(rslt$starter, 'person_id', pers_xwalk, replace = TRUE),
              name = 'base_cohort')
-  output_tbl(new_id(next_cohort, 'person_id', pers_xwalk, replace = TRUE),
+  output_tbl(new_id(rslt$next_cohort, 'person_id', pers_xwalk, replace = TRUE),
              name = 'next_cohort')
   # Don't forget to save the crosswalk
   output_tbl(pers_xwalk, name = 'person_xwalk', local = TRUE)
 
-  # Write step summary log to CSV and/or database, as determined by configuration
+  # Write step summary log to CSV and/or database,
+  # as determined by configuration
   output_sum()
 
   message('Done.')
 
-  invisible(starter)
+  invisible(rslt)
 
 }
 
