@@ -38,7 +38,8 @@ Brief narrative summary of the request.
 # Default taken from R notebook behavior: when knitting, wd will always be location of notebook
 base_dir <- '..'
 Sys.setenv(PEDSNET_SKIP_REQUEST_EXECUTION=1)
-try(source('../site/run.R')) # May not be able to make db connection
+tryCatch(source('../site/run.R'),
+         error = function (e) message(e)) # May not be able to make db connection
 
 # Set to "local" to read data from ../results, or another value to read from db
 data_source <- if_else(config('execution_mode') == 'distribution', 'local', 'not_local')
