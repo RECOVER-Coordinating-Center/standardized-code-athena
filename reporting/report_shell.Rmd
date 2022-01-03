@@ -8,32 +8,6 @@ output:
     toc_float: yes
 ---
 
-## Notices
-
-### Feasibility Query
-
-The data presented here are the results of a feasbility evaluation performed by
-the PEDSnet data and analytic coordinating center.  Because feasibility queries
-require efficient completion, they entail less consultation regarding study
-design, resource allocation, and data quality analysis than full study
-execution, feasibility results may incompletely predict observations made
-during the study.
-
-### Confidentiality
-
-Please treat the contents of this report as confidential, and do not
-redistrubute beyond PEDSnet staff and the requester.
-
-## Specification
-
-### Request Description
-
-Brief narrative summary of the request.
-
-### Cohort Definition
-
-* List the logical steps of the query
-
 ```{r setup, include=FALSE}
 # Default taken from R notebook behavior: when knitting, wd will always be location of notebook
 base_dir <- '..'
@@ -69,6 +43,50 @@ prettify_kable <- function(data) {
 
 cohort <- get_results('my_cohort_table')
 ```
+
+## Notices
+
+### Feasibility Query
+
+The data presented here are the results of a feasbility evaluation performed by
+the PEDSnet data and analytic coordinating center.  Because feasibility queries
+require efficient completion, they entail less consultation regarding study
+design, resource allocation, and data quality analysis than full study
+execution, feasibility results may incompletely predict observations made
+during the study.
+
+### Confidentiality
+
+Please treat the contents of this report as confidential, and do not
+redistrubute beyond PEDSnet staff and the requester.
+
+## Request Information
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+tribble( ~Item, ~Value,
+         'Title', config('title'),
+         'Requester', config('requester_name'),
+         'Sponsoring Member', config('requester_site'),
+         'CDM Version', as.character(config('cdm_version')),
+         'Request Version', as.character(config('req_version'))) %>% 
+  prettify_kable()
+
+```
+
+## Specification
+
+### Request Description
+
+Brief narrative summary of the request.
+
+### Cohort Definition
+
+* List the logical steps of the query
+
+### Feasibility Notes
+
+* List any observations made during query development that may be useful for
+  assessing study feasibility
 
 ## Results
 
