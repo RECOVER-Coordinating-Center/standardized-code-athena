@@ -36,8 +36,8 @@ rslt
 }
 
 prettify_kable <- function(data) {
-  data %>% kable(digits = 4, format.args = list(big.mark = ',')) %>% 
-    kable_styling(bootstrap_options = c("striped", "hover")) %>% 
+  data %>% kable(digits = 4, format.args = list(big.mark = ',')) %>%
+    kable_styling(bootstrap_options = c("striped", "hover")) %>%
     column_spec(1, bold = T, border_right = T)
 }
 
@@ -68,7 +68,7 @@ tribble( ~Item, ~Value,
          'Requester', config('requester_name'),
          'Sponsoring Member', config('requester_site'),
          'CDM Version', as.character(config('cdm_version')),
-         'Request Version', as.character(config('req_version'))) %>% 
+         'Request Version', as.character(config('req_version'))) %>%
   prettify_kable()
 
 ```
@@ -99,13 +99,70 @@ patients from `r summarise(cohort, ct = n_distinct(site)) %>% pull(ct)` sites.
 # DBI doesn't have a good way to interrogate tables in a specified schema,
 # so you have to list the step logs you want to summarise (e.g. DCC + remote
 # sites).
-list(config('site')) %>%
+step_log <- list(config('site')) %>%
   map(.f = function(x) {
     get_results(paste0(x, '_steps'))
-  }) %>% 
-  reduce(.f = dplyr::union) %>% 
-  arrange(stamp) %>% filter(cohort != 'Start') %>% 
-  select(cohort, persons) %>% prettify_kable()
+  }) %>%
+  reduce(.f = dplyr::union)
+
+step_log %>%
+  arrange(stamp) %>%
+  select(cohort, persons) %>%
+  mutate(persons = if_else(persons > 0L & persons < 11L,
+                           as.integer(NA), as.integer(persons))) %>%
+  mutate(percent_prior = round(100 * persons /
+                                 coalesce(lag(persons), persons), 2)) %>%
+  prettify_kable()
+```
+
+### Site stratification
+
+This stratification comprises the final included cohort.
+
+```{r site, echo=FALSE}
+total <- cohort %>% ungroup() %>% distinct(person_id) %>% count() %>% pull(n)
+cohort %>% group_by(site) %>%
+  summarize(persons = n_distinct(person_id)) %>%
+  mutate(persons = if_else(persons > 0L & persons < 11L,
+                           as.integer(NA), as.integer(persons))) %>%
+  mutate(percent_total = round(100 * persons / total, 2)) %>%
+  prettify_kable()
+```
+
+### Demographics
+
+This stratification comprises the final included cohort. Demographic
+categories from the typical PHS398 set not listed here reflect zero
+cohort members in that category.
+
+```{r demog, echo=FALSE}
+c_names <- vocabulary_tbl('concept') %>%
+  filter(domain_id %in% c('Gender', 'Race', 'Ethnicity')) %>%
+  select(concept_id, concept_name) %>% collect()
+
+demog <- cdm_tbl('person') %>%
+  semi_join(distinct(cohort, person_id),
+            by = 'person_id', copy = TRUE) %>% collect() %>%
+  inner_join(select(c_names, concept_id, sex = concept_name),
+             by = c('gender_concept_id' = 'concept_id')) %>%
+  inner_join(select(c_names, concept_id, race = concept_name),
+             by = c('race_concept_id' = 'concept_id')) %>%
+  inner_join(select(c_names, concept_id, hispanic = concept_name),
+             by = c('ethnicity_concept_id' = 'concept_id')) %>%
+  select(person_id, sex, race, hispanic)
+
+h_cts <- demog %>% group_by(sex, hispanic) %>% summarise(persons = n()) %>%
+  mutate(persons = if_else(persons > 0L & persons < 11L,
+                           as.integer(NA), as.integer(persons))) %>%
+  pivot_wider(names_from = sex, values_from = persons) %>% rename(group = hispanic)
+r_cts <- demog %>% group_by(sex, race) %>% summarise(persons = n()) %>%
+  mutate(persons = if_else(persons > 0L & persons < 11L,
+                           as.integer(NA), as.integer(persons))) %>%
+  pivot_wider(names_from = sex, values_from = persons) %>% rename(group = race)
+
+prettify_kable(r_cts)
+prettify_kable(h_cts)
+
 ```
 
 ### _Add report summary content here as subsections_
