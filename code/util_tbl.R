@@ -128,6 +128,10 @@ results_tbl <- function(name, db = config('db_src'),
 #'   logically false value, no tag is added.  If a character string, that is
 #'   used as the tag.  Otherwise, the `config('local_name_tag')` string is
 #'   used.
+#' @param schema A label for the name of the schema to be included in the
+#'   result, if `temporary` is false.  If a config element of the same name
+#'   exists, its value is used; otherwise, the `schema` parameter is used as
+#'   the schema name itself.
 #' @param db A database connection, used in more recent versions of dbplyr to
 #'   insure quoting of table names matches what the database expects
 #'
@@ -138,6 +142,7 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
                           temporary = ! config('retain_intermediates'),
                           results_tag =  TRUE,
                           local_tag = NA,
+                          schema = 'results_schema',
                           db = config('db_src')) {
   if (! is.na(local_tag) && (is.character(local_tag) || local_tag)) {
     if (! is.character(local_tag)) local_tag <- config('local_name_tag')
@@ -147,7 +152,9 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
     if (! is.character(results_tag)) results_tag <- config('results_name_tag')
     name <- .add_name_tag(name, tag = results_tag, db = db)
   }
-  .qual_name(name, ifelse(temporary, NA, 'results_schema'), db)
+  .qual_name(name = name,
+             schema_tag = ifelse(temporary, NA, schema),
+             db = db)
 }
 
 #' Construct a fully qualified results table name
