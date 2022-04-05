@@ -23,7 +23,7 @@
 #'
 #' Please note that in order to serve as a portable starting point for request
 #' execution, this file contains a mix of configuration settings and executable
-#' code relying on global varibles.  Please do not edit the content outside the
+#' code relying on global variables.  Please do not edit the content outside the
 #' designated configuration settings unless you are familiar with the internals
 #' of the standard request framework, and the potential for distant effects.
 #' @md
@@ -32,7 +32,7 @@
 #' Please edit: optional basename of the directory for this request package
 #'
 #' This basename should point to the top-level directory for the request
-#' package, located under whereever you have set `PEDSNET_DATA_REQUEST_ROOT`.
+#' package, located under wherever you have set `PEDSNET_DATA_REQUEST_ROOT`.
 #' At present, it is only used if you leave `base_dir` at the auto-detect
 #' setting, which is STRONGLY recommended.
 #'
