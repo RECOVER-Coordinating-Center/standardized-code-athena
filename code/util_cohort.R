@@ -145,7 +145,7 @@ gen_xwalk <- function(input, id_col, rep_col = 'seq_id') {
 #' @md
 new_id <- function(data,
                    id_col = paste0(deparse(substitute(data)), '_id'),
-                   xwalk = select_at(data, vars(id_col)) %>%
+                   xwalk = select_at(data, vars(id_col)) %>% distinct() %>%
                      mutate(seq_id = row_number()),
                    replace = FALSE) {
 
