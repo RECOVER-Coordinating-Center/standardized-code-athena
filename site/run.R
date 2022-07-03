@@ -119,12 +119,6 @@ config('retain_intermediates', NA)
 #' @md
 config('results_schema', NA)
 
-#################################################################
-#
-# End of site-specific code.  Please do not edit below this point
-#
-#################################################################
-
 #' Request-specific suffix for output
 #'
 #' Unique tag for non-temporary table names created during execution
@@ -161,7 +155,13 @@ config('db_trace', TRUE)
 #' @md
 config('cache_enabled', config('execution_mode') != 'development')
 
-source(file.path(base_dir, 'code', 'driver.R'))
+#################################################################
+#
+# End of site-specific code.  Please do not edit below this point
+#
+#################################################################
+
+source(file.path(base_dir, 'code', 'setup.R'))
 
 if ( is.na(Sys.getenv('PEDSNET_SKIP_REQUEST_EXECUTION', unset = NA)) &&
      (config('execution_mode') != 'development' ||
