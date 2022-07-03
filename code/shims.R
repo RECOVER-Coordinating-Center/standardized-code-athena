@@ -3,9 +3,6 @@
 # Hacks necessary for database support with current libraries.
 # No user-serviceable parts inside.
 
-# Get DBI-compatible connection handle across dplyr generations
-dbi_con <- function(db) if (inherits(db, 'src_dbi')) db$con else db
-
 # OK, Oracle temporary tables aren't temporary; their contents are.
 # So we need to clean them out when we're done.
 .env_cleanup <- function(db = config('db_src')) {

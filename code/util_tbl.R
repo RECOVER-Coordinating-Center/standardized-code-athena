@@ -19,6 +19,36 @@
   function(name, schema_tag, db = config('db_src'))
     tbl(db, .qual_name(name, schema_tag, db))
 
+#' Get DBI-compatible connection handle across dplyr generations
+#'
+#' Given a database connection the might have been created by [DBI::dbConnect()]
+#'   or my one of the `src_foo()` functions in versions of dbplyr, return a
+#'   DBI-compatible connection.
+#'
+#' Note that this function is essentially identical to [dbplyr::remote_con()]
+#'   for dbplyr connections.
+#'
+#' @param db A DBI or dbplyr connection.
+#'
+#' @return A DBI-compatible connection, or NULL if `db` is not a connection.
+#' @md
+dbi_con <- function(db) {
+  # R introspection is very limited, so best approach is to keep trying.
+  rslt <- NULL
+  # DBI Connection
+  if (! is.null(tryCatch( DBI::dbDataType(db, 1L),
+                         error = function (e) NULL))) return(db)
+  # Modern dbplyr
+  if (! is.null(tryCatch( rslt <- remote_con(db),
+                         error = function (e) NULL))) return(rslt)
+  # Older dbplyr query - breaks encapsulation
+  if (! is.null(tryCatch( rslt <- db$src$con,
+                         error = function (e) NULL))) return(rslt)
+  # Older dbplyr connection - breaks encapsulation
+  if (! is.null(tryCatch( rslt <- db$con,
+                         error = function (e) NULL))) return(rslt)
+  rslt
+}
 
 #' Connect to an existing CDM data table
 #'
@@ -341,14 +371,15 @@ compute_new <- function(tblx,
       name <- gsub('\\s+','_', name, perl = TRUE)
       name <- intermed_name(name, temporary)
     }
-    if (db_exists_table(tblx$src, name)) db_remove_table(tblx$src, name)
+    con <- dbi_con(tblx)
+    if (db_exists_table(con, name)) db_remove_table(con, name)
     if (config('db_trace')) {
       show_query(tblx)
       explain(tblx)
       message(' -> ',
               ifelse(packageVersion('dbplyr') < '2.0.0',
                      dbplyr::as.sql(name),
-                     dbplyr::as.sql(name, dbi_con(tblx$src))))
+                     dbplyr::as.sql(name, con)))
       start <- Sys.time()
       message(start)
     }
@@ -526,7 +557,7 @@ output_tbl <- function(data, name = NA, local = FALSE,
     rname <- intermed_name(name, temporary = FALSE, db = db,
                            results_tag = results_tag, local_tag = local)
     if (any(class(data)  == 'tbl_sql') &&
-        identical(data$src$con, db)) {
+        identical(dbi_con(data), dbi_con(db))) {
       rslt <- compute_new(data, rname, temporary = FALSE, db = db, ...)
     }
     else {
