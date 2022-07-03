@@ -36,6 +36,27 @@ config_exists <- function(label) {
 config_rm <- function(label) {
   if (config_exists(label)) rm(list = label, pos = req_env)
 }
+#' Append to a configuration item
+#'
+#' Append new value(s) to a configuration item if the item already exists.  The
+#'   form of the result depends on the existing value of the item, following the
+#'   rules for the core [c()] function.
+#'
+#' If the configuration item does not exist, then it is created with the given
+#'   value as its contents.
+#'
+#' @param label The name of the configuration item
+#' @param value The value to be appended
+#'
+#' @return The revised value of the configuration item
+#' @md
+config_append <- function(label, value) {
+  if (config_exists(label)) {
+    config(label, c(config(label), value))
+  } else {
+    config(label, value)
+  }
+}
 
 #' Retrieve a handle for accessing configuration items
 #'
