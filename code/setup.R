@@ -66,7 +66,7 @@ suppressPackageStartupMessages(library(methods))
     .env_setup()
 
     for (def in c('retain_intermediates', 'results_schema')) {
-      if (! config_exists(def))
+      if (! config_exists(def) || is.na(config(def)))
         config(def, config(paste0('default_', def)))
     }
 
