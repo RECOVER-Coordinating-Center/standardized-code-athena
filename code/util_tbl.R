@@ -39,13 +39,13 @@ dbi_con <- function(db) {
   if (! is.null(tryCatch( DBI::dbDataType(db, 1L),
                          error = function (e) NULL))) return(db)
   # Modern dbplyr
-  if (! is.null(tryCatch( rslt <- remote_con(db),
+  if (! is.null(tryCatch( { rslt <- remote_con(db) },
                          error = function (e) NULL))) return(rslt)
   # Older dbplyr query - breaks encapsulation
-  if (! is.null(tryCatch( rslt <- db$src$con,
+  if (! is.null(tryCatch( { rslt <- db$src$con },
                          error = function (e) NULL))) return(rslt)
   # Older dbplyr connection - breaks encapsulation
-  if (! is.null(tryCatch( rslt <- db$con,
+  if (! is.null(tryCatch( { rslt <- db$con },
                          error = function (e) NULL))) return(rslt)
   rslt
 }
