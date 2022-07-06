@@ -106,38 +106,52 @@ minicdm.vignette <- function() {
 #' If you wish to include additional personal tables in your extraction, you
 #' may add rows to the returned tbl.  Each must have three columns:
 #'
-#' * `table_name` - the name of the CDM table to extract
+#' * `tbl_expr` - a dplyr tbl specifying the CDM table to extract
 #' * `cleanup_name` - the name of a table-specific cleanup function. If it is
 #'   `NA`, no table-specific cleanup is done
 #' * `indexes` - a list specifying the indices to construct, as described for
 #'    [dbplyr::compute()].
+#' * `output_name` - the name to give the resulting mini-CDM tbl
 #'
 #' @return The tbl of tables
 #' @md
 personal_tables <- function() {
-  tribble( ~table_name, ~cleanup_name, ~indexes,
-          'adt_occurrence', NA,
+  tribble( ~tbl_expr, ~cleanup_name, ~indexes, ~output_name,
+          cdm_tbl('adt_occurrence'), NA,
           list('person_id', 'visit_occurrence_id', 'service_concept_id'),
-          'condition_era', NA, list('condition_concept_id'),
-          'condition_occurrence', NA,
+          'adt_occurrence',
+          cdm_tbl('condition_era'), NA, list('condition_concept_id'),
+          'condition_era',
+          cdm_tbl('condition_occurrence'), NA,
           list('person_id', 'visit_occurrence_id', 'condition_concept_id'),
-          'death', NA, list('person_id'),
-          'dose_era', NA, list('person_id', 'drug_concept_id'),
-          'drug_era', NA,  list('person_id', 'drug_concept_id'),
-          'drug_exposure', NA,
+          'condition_occurrence',
+          cdm_tbl('death'), NA, list('person_id'), 'death',
+          cdm_tbl('dose_era'), NA, list('person_id', 'drug_concept_id'),
+          'dose_era',
+          cdm_tbl('drug_era'), NA,  list('person_id', 'drug_concept_id'),
+          'drug_era',
+          cdm_tbl('drug_exposure'), NA,
           list('person_id', 'drug_concept_id', 'visit_occurrence_id'),
-          'immunization', NA,
+          'drug_exposure',
+          cdm_tbl('immunization'), NA,
           list('person_id', 'immunization_concept_id', 'visit_occurrence_id'),
-          'measurement', '.measurement_cleanup',
+          'immunization',
+          cdm_tbl('measurement'), '.measurement_cleanup',
           list('person_id', 'visit_occurrence_id', 'measurement_concept_id'),
-          'observation', NA,
+          'measurement',
+          cdm_tbl('observation'), NA,
           list('person_id', 'visit_occurrence_id', 'observation_concept_id'),
-          'observation_period', NA, list('person_id'),
-          'person', '.person_cleanup', list('person_id'),
-          'procedure_occurrence', NA,
+          'observation',
+          cdm_tbl('observation_period'), NA, list('person_id'),
+          'observation_period',
+          cdm_tbl('person'), '.person_cleanup', list('person_id'),
+          'person',
+          cdm_tbl('procedure_occurrence'), NA,
           list('person_id', 'visit_occurrence_id', 'procedure_concept_id'),
-          'visit_occurrence', NA,
-          list('person_id', 'visit_occurrence_id', 'visit_concept_id'))
+          'procedure_occurrence',
+          cdm_tbl('visit_occurrence'), NA,
+          list('person_id', 'visit_occurrence_id', 'visit_concept_id'),
+          'visit_occurrence')
 }
 
 #' List of impersonal tables with cleanups
@@ -152,23 +166,28 @@ personal_tables <- function() {
 #' If you wish to include additional personal tables in your extraction, you
 #' may add rows to the returned tbl.  Each must have four columns:
 #'
-#' * `table_name` - the name of the CDM table to extract
+#' * `tbl_expr` - a dplyr tbl specifying the CDM table to extract
 #' * `cleanup_name` - the name of a table-specific cleanup function. If it is
 #'   `NA`, no table-specific cleanup is done
 #' * `indexes` - a list specifying the indices to construct, as described for
 #'    [dbplyr::compute()].
+#' * `output_name` - the name to give the resulting mini-CDM tbl
 #' * `join_on` - the name of the column in this table by which records are
 #'   linked to other CDM tables
 #'
 #' @return The list of tables
 #' @md
 impersonal_tables <- function() {
-   tribble( ~table_name, ~cleanup_name, ~indexes, ~join_on,
-           'care_site', '.care_site_cleanup', list('care_site_id'), 'care_site_id',
-           'location', NA, list('location_id'), 'location_id',
-           'provider', '.provider_cleanup', list('provider_id'), 'provider_id',
-           'visit_payer', '.visit_payer_cleanup',
-           list('visit_occurrence_id', 'plan_class'), 'visit_occurrence_id')
+   tribble( ~tbl_expr, ~cleanup_name, ~indexes, ~output_name, ~join_on,
+           cdm_tbl('care_site'), '.care_site_cleanup', list('care_site_id'),
+           'care_site', 'care_site_id',
+           cdm_tbl('location'), NA, list('location_id'),
+           'location', 'location_id',
+           cdm_tbl('provider'), '.provider_cleanup', list('provider_id'),
+           'provider', 'provider_id',
+           cdm_tbl('visit_payer'), '.visit_payer_cleanup',
+           list('visit_occurrence_id', 'plan_class'),
+           'visit_payer', 'visit_occurrence_id')
 }
 
 
@@ -187,14 +206,15 @@ get_personal_tables <- function(cohort, metadata = personal_tables(),
                                 clean = TRUE) {
   rslt <- list()
 
-  for (tname in select(metadata, table_name) %>% pull()) {
+  for (tname in pull(metadata, output_name)) {
     message('Extracting ', tname)
-    rslt[[tname]] <- cdm_tbl(tname) %>% semi_join(cohort, by = 'person_id')
+    tdata <- metadata %>% filter(output_name == local(tname))
+    rslt[[tname]] <- pull(tdata, tbl_expr)[[1]] %>%
+      semi_join(cohort, by = 'person_id')
 
     if (clean) {
       cohort_data <- rslt[[tname]]
-      cleanup <- filter(metadata, table_name == local(tname)) %>%
-        select(cleanup_name) %>% pull()
+      cleanup <- pull(tdata, cleanup_name)
       if (!is.na(cleanup)) cohort_data <- do.call(cleanup, list(cohort_data))
       rslt[[tname]] <- .clean_table_base(cohort_data)
     }
@@ -233,16 +253,17 @@ get_impersonal_tables <- function(personal_tables,
   toggle <- 0L
   cycle <- 1L
   join_cols <- pull(metadata, join_on)
-  get_output <- function(tname, join_col) {
+  get_output <- function(tname) {
     message('Extracting ', tname)
+    tdata <- metadata %>% filter(output_name == local(tname))
+    join_col <- pull(tdata, join_on)
     probe <- select(accum, any_of(join_col)) %>% distinct()
-    rslt[[tname]] <- inner_join(cdm_tbl(tname), probe, by = join_col)
+    rslt[[tname]] <- inner_join(pull(tdata, tbl_expr)[[1]], probe, by = join_col)
     if (clean) {
-      tdata <- rslt[[tname]]
-      cleanup <- filter(metadata, table_name == local(tname)) %>%
-        select(cleanup_name) %>% pull()
-      if (!is.na(cleanup)) tdata <- do.call(cleanup, list(tdata))
-      rslt[[tname]] <- .clean_table_base(tdata)
+      impdata <- rslt[[tname]]
+      cleanup <- pull(tdata, cleanup_name)
+      if (!is.na(cleanup)) impdata <- do.call(cleanup, list(impdata))
+      rslt[[tname]] <- .clean_table_base(impdata)
     }
   }
 
@@ -271,10 +292,8 @@ get_impersonal_tables <- function(personal_tables,
                                         Sys.getpid()),
                          indexes = as.list(join_cols))
 
-  for (tname in select(metadata, table_name) %>% pull()) {
-    join_on  <- filter(metadata, table_name == local(tname)) %>%
-      select(join_on) %>% pull()
-    rslt[[tname]] <- get_output(tname, join_on)
+  for (tname in pull(metadata, output_name)) {
+    rslt[[tname]] <- get_output(tname)
   }
   rslt
 }
@@ -344,7 +363,7 @@ get_concepts <- function(tables, .cycle_limit = 5) {
 #' @param tables A list of tbls to materialize, where the name of each element
 #'   is the name of the output table to create.
 #' @param metadata A tbl containing a row for each table to be materialized,
-#'   with the name of the table in `table_name`, and a list of columns to be
+#'   with the name of the table in `output_name`, and a list of columns to be
 #'   indexed in `indexes`.
 #'
 #' @return A list of result tables
@@ -356,8 +375,7 @@ materialize_tbls <- function(tables,
   rslt <- list()
 
   for (tname in names(tables)) {
-    indx <- filter(metadata, table_name == local(tname)) %>%
-      select(indexes) %>% pull()
+    indx <- filter(metadata, output_name == local(tname)) %>% pull(indexes)
     if (length(indx) > 0) indx <- indx[[1]]
     message('Instantiating ', tname)
     rslt[[tname]] <- output_tbl(tables[[tname]], name = tname, indexes = indx)
@@ -411,7 +429,7 @@ build_mini_cdm <- function (cohort, clean = TRUE,
     reduce(map(names(t_impersonal),
                .f = function (x) {
                  intersect(tbl_vars(t_impersonal[[x]]),
-                           pull(impersonal %>% filter(table_name != x),
+                           pull(impersonal %>% filter(output_name != x),
                                 'join_on'))
                }), c)
   while (length(maybe_more) > 0) {
@@ -434,7 +452,7 @@ build_mini_cdm <- function (cohort, clean = TRUE,
   rslt <- c(t_personal, t_impersonal)
   concepts <- get_concepts(rslt)
   if (materialize)
-    concepts <- materialize_tbls(concepts, tibble( table_name = 'concept',
+    concepts <- materialize_tbls(concepts, tibble( output_name = 'concept',
                                                    indexes = list('concept_id')))
 
   c(rslt, concepts)
