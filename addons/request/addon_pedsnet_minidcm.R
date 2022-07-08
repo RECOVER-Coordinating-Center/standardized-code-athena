@@ -6,6 +6,7 @@
 # when the request is run.
 #
 ########
+suppressPackageStartupMessages(require(stringr))
 
 #' Extract a PEDSnet mini-CDM for a cohort
 #'
@@ -113,6 +114,28 @@ minicdm.vignette <- function() {
 #'    [dbplyr::compute()].
 #' * `output_name` - the name to give the resulting mini-CDM tbl
 #'
+#' For example, if you have a table named `my_cohort`, you might say something
+#' like
+#'
+#' > my_meta = personal_tables() %>%
+#' >   bind_rows(tibble_row(tbl_expr = cdm_tbl('my_cohort'),
+#' >                        output_name = 'my_cohort',
+#' >                        indexes = list('person_id', 'cohort_id')))
+#'
+#' It is also frequent practice to use a common prefix or other part of the
+#' table name to make it easy to group mini-cdm tables.  You can do this by
+#' making appropriate modifications to the `output_name` column in the metadata,
+#' such as
+#'
+#' > my_meta = personal_tables() %>%
+#' >   mutate(output_name = str_replace(output_name, '(.+)', 'cdm_\\1')
+#'
+#' Finally, it will be useful in many cases to constrain the data collected
+#' into the mini-cdm, for instance to limit to a defined study period.  This is
+#' done by modifying the `tbl_expr` for each row appropriately. As the name
+#' implies, these are dplyr expressions, and can be constrained using verbs
+#' such as [dplyr::filter()].
+#'
 #' @return The tbl of tables
 #' @md
 personal_tables <- function() {
@@ -174,6 +197,9 @@ personal_tables <- function() {
 #' * `output_name` - the name to give the resulting mini-CDM tbl
 #' * `join_on` - the name of the column in this table by which records are
 #'   linked to other CDM tables
+#'
+#' Cf. documentation for [personal_tables()] for further discussion of
+#' customising metadata to meet your needs.
 #'
 #' @return The list of tables
 #' @md
@@ -304,13 +330,14 @@ get_impersonal_tables <- function(personal_tables,
 #' in those tables
 #'
 #' @param tables The list of input tbls
+#' @param output_name The name to give the resultant table
 #' @param .cycle_limit The number of source columns to scan before
 #'   [dbplyr::compute()]ing an intermediate result, to avoid creating a deeply
 #'   nested SQL expression
 #'
 #' @result A one-element list of output table name and tbl handle.
 #' @md
-get_concepts <- function(tables, .cycle_limit = 5) {
+get_concepts <- function(tables, output_name = 'concept', .cycle_limit = 5) {
   c_id <- NA
   cycle <- 1
   toggle <- 1
@@ -345,7 +372,7 @@ get_concepts <- function(tables, .cycle_limit = 5) {
   }
 
   message('Extracting concepts')
-  rslt <- list('concept' = vocabulary_tbl('concept') %>%
+  rslt <- list(output_name = vocabulary_tbl('concept') %>%
                  inner_join(distinct(c_id), by = 'concept_id'))
 
   for (tmp in temps) db_remove_table(name = tmp, temporary = TRUE)
@@ -406,14 +433,27 @@ materialize_tbls <- function(tables,
 #' @param personal A list of personal tables to extract, with metadata
 #' @param impersonal A list of impersonal tables to extract, with metadata
 #' @param materialize A Boolean value indicating whether the results should
-#'  be materialized as database tables
+#'   be materialized as database tables
+#' @param .fix_names A function that takes a vector of output names and
+#'   returns a vector of altered names to use for output tables
 #'
 #' @return A list of mini-cdm tbls with their names.
 #' @md
-build_mini_cdm <- function (cohort, clean = TRUE,
-                            personal = personal_tables(),
-                            impersonal = impersonal_tables(),
-                            materialize = TRUE) {
+build_mini_cdm <-
+  function (cohort, clean = TRUE,
+            personal = personal_tables(),
+            impersonal = impersonal_tables(),
+            materialize = TRUE,
+            .fix_names = function(x) str_replace(x, '(.+)', 'cdm_\\1')) {
+
+  concept_out <- 'concept'
+  if( is.function(.fix_names)) {
+    concept_out <- .fix_names(concept_out)
+    personal <- personal %>%
+      mutate(output_name = .fix_names(output_name))
+    impersonal <- impersonal %>%
+      mutate(output_name = .fix_names(output_name))
+  }
 
   t_personal <- get_personal_tables(cohort = cohort,
                                     metadata = personal,
@@ -452,8 +492,9 @@ build_mini_cdm <- function (cohort, clean = TRUE,
   rslt <- c(t_personal, t_impersonal)
   concepts <- get_concepts(rslt)
   if (materialize)
-    concepts <- materialize_tbls(concepts, tibble( output_name = 'concept',
-                                                   indexes = list('concept_id')))
+    concepts <- materialize_tbls(concepts,
+                                 tibble( output_name = concept_out,
+                                         indexes = list('concept_id')))
 
   c(rslt, concepts)
 }
