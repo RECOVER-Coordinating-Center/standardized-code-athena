@@ -402,10 +402,12 @@ materialize_tbls <- function(tables,
   rslt <- list()
 
   for (tname in names(tables)) {
-    indx <- filter(metadata, output_name == local(tname)) %>% pull(indexes)
+    tmeta <- filter(metadata, output_name == local(tname))
+    indx <- tmeta %>% pull(indexes)
     if (length(indx) > 0) indx <- indx[[1]]
+    outname <- tmeta %>% pull(output_name)
     message('Instantiating ', tname)
-    rslt[[tname]] <- output_tbl(tables[[tname]], name = tname, indexes = indx)
+    rslt[[tname]] <- output_tbl(tables[[tname]], name = outname, indexes = indx)
   }
   rslt
 }
