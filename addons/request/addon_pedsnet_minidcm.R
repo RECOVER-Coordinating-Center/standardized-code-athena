@@ -372,8 +372,9 @@ get_concepts <- function(tables, output_name = 'concept', .cycle_limit = 5) {
   }
 
   message('Extracting concepts')
-  rslt <- list(output_name = vocabulary_tbl('concept') %>%
+  rslt <- list(vocabulary_tbl('concept') %>%
                  inner_join(distinct(c_id), by = 'concept_id'))
+  names(rslt) = c(output_name)
 
   for (tmp in temps) db_remove_table(name = tmp, temporary = TRUE)
 
@@ -494,7 +495,7 @@ build_mini_cdm <-
   rslt <- c(t_personal, t_impersonal)
   concepts <- get_concepts(rslt)
   if (materialize)
-    concepts <- materialize_tbls(concepts,
+    concepts <- materialize_tbls(setNames(concepts, concept_out),
                                  tibble( output_name = concept_out,
                                          indexes = list('concept_id')))
 
