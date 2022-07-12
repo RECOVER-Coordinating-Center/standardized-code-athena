@@ -50,6 +50,35 @@
                           args = list(.by_group = .by_group)
                         )
                       }, ns = 'dbplyr')
+  } else if (packageVersion('dbplyr') >= '2.2.0') {
+    # Fix bug in 2.2.0 that calls unname() indisciminately and wipes out schema
+    assignInNamespace('compute.tbl_sql',
+                        function(x, name = dbplyr:::unique_table_name(),
+                                 temporary = TRUE, unique_indexes = list(),
+                                 indexes = list(), analyze = TRUE, ...,
+                                 cte = FALSE) {
+                          if (!any(class(name) %in%
+                                   c('dbplyr_schema', 'dbplyr_catalog')))
+                              name <- unname(name)
+                          vars <- op_vars(x)
+                          assertthat::assert_that(all(unlist(indexes) %in% vars))
+                          assertthat::assert_that(all(unlist(unique_indexes) %in% vars))
+
+                          x_aliased <- select(x, !!! syms(vars)) # avoids problems with SQLite quoting (#1754)
+                          sql <- db_sql_render(x$src$con, x_aliased$lazy_query, cte = cte)
+
+                          name <- db_compute(x$src$con, name, sql,
+                                             temporary = temporary,
+                                             unique_indexes = unique_indexes,
+                                             indexes = indexes,
+                                             analyze = analyze, ...)
+
+                          dbplyr:::tbl_src_dbi(x$src,
+                                               as.sql(name, con = x$src$con),
+                                               colnames(x)) %>%
+                            group_by(!!!syms(op_grps(x))) %>%
+                            window_order(!!!op_sort(x))
+                        }, ns = 'dbplyr')
   }
 
   if (any(class(db) == 'OraConnection')) .ora_env_setup(db)
