@@ -51,14 +51,14 @@ suppressPackageStartupMessages(require(stringr))
 #' Finally, it is important to note that extracted mini-CDM contains all of the
 #' data in the main CDM, and is intended for use by PEDSnet certified data
 #' scientists. If it is to be made available to a study team or released
-#' outside of the PEDSnet DCC, then the standard processes of desinsitization
+#' outside of the PEDSnet DCC, then the standard processes of desensitization
 #' (cf. the `desensitize` addon) and lessidentification (cf. the
 #' [PEDSnet::Lessidentify](https://github.com/PEDSnet/PEDSnet-Lessidentify)
 #' utility).
 #'
 #' @return This function exists only for its documentation
 #' @md
-minicdm.vignette <- function() {
+minicdm.pedsnet.vignette <- function() {
   'See help on this topic for a summary of extractign a PEDSnet mini-cdm'
 }
 
@@ -179,7 +179,7 @@ personal_tables <- function() {
 
 #' List of impersonal tables with cleanups
 #'
-#' Return a tbl whose rows are tables note containing a `person_id`, with
+#' Return a tbl whose rows are tables not containing a `person_id`, with
 #' corresponding values providing a function that cleans up rows in that table
 #' for release to study teams, a list of columns to index when the table is
 #' instantiated, and column names used to join to clinical facts.  Note that the
