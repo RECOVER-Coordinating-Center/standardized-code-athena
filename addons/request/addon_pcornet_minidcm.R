@@ -64,7 +64,7 @@ minicdm.pcornet.vignette <- function() {
 # desensitization.
 .clean_table_base <- function(table) {
     table %>%
-    select(-'site')
+    select(-any_of('site'))
 }
 .trial_cleanup <- function(tr_tbl) {
   tr_tbl %>%
