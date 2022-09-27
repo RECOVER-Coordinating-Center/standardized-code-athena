@@ -35,8 +35,8 @@ suppressPackageStartupMessages(library(methods))
 #'
 #' @return The value of `here`.
 #' @md
-.load <- function(here = ifelse(typeof(get('config')) == 'closure',
-                                config('base_dir'), base_dir),
+.load <- function(here = base::ifelse(typeof(get('config')) == 'closure',
+                                      config('base_dir'), base_dir),
                   driver = 'driver.R') {
     source(file.path(here, 'code', 'config.R'))
     source(file.path(here, 'code', 'req_info.R'))

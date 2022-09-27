@@ -2,7 +2,7 @@
 .qual_name <- function(name, schema_tag, db = config('db_src')) {
   if (inherits(name, c('ident_q', 'dbplyr_schema'))) return(name)
   name_map <- config('table_names')
-  name <- ifelse(hasName(name_map, name), name_map[[name]], name)
+  name <- base::ifelse(hasName(name_map, name), name_map[[name]], name)
   if (! is.na(schema_tag)) {
     if (config_exists(schema_tag)) schema_tag <- config(schema_tag)
     if (! is.na(schema_tag)) {
@@ -183,7 +183,7 @@ intermed_name <- function(name = paste0(sample(letters, 12, replace = TRUE),
     name <- .add_name_tag(name, tag = results_tag, db = db)
   }
   .qual_name(name = name,
-             schema_tag = ifelse(temporary, NA, schema),
+             schema_tag = base::ifelse(temporary, NA, schema),
              db = db)
 }
 
@@ -244,7 +244,7 @@ db_remove_table <- function(db = config('db_src'), name,
     elts <- name
   }
   sql <- paste0('drop table ',
-                ifelse(fail_if_missing, '', 'if exists '))
+                base::ifelse(fail_if_missing, '', 'if exists '))
   if (any(grepl('ora', class(con), ignore.case = TRUE))) {
     if (! db_exists_table(con, name)) return(TRUE)
     if (length(elts) > 1) {
@@ -377,9 +377,9 @@ compute_new <- function(tblx,
       show_query(tblx)
       explain(tblx)
       message(' -> ',
-              ifelse(packageVersion('dbplyr') < '2.0.0',
-                     dbplyr::as.sql(name),
-                     dbplyr::as.sql(name, con)))
+              base::ifelse(packageVersion('dbplyr') < '2.0.0',
+                           dbplyr::as.sql(name),
+                           dbplyr::as.sql(name, con)))
       start <- Sys.time()
       message(start)
     }
@@ -457,9 +457,9 @@ copy_to_new <- function(dest = config('db_src'), df,
     message(start)
     message('Data: ', deparse(substitute(df)))
     message('Table name: ',
-            ifelse(packageVersion('dbplyr') < '2.0.0',
-                   dbplyr::as.sql(name),
-                   dbplyr::as.sql(name, dbi_con(dest))),
+            base::ifelse(packageVersion('dbplyr') < '2.0.0',
+                         dbplyr::as.sql(name),
+                         dbplyr::as.sql(name, dbi_con(dest))),
             ' (temp: ', temporary, ')')
     message('Data elements: ', paste(tbl_vars(df), collapse = ','))
     message('Rows: ', NROW(df))
@@ -485,7 +485,7 @@ copy_to_new <- function(dest = config('db_src'), df,
   dirs <- config('subdirs')
   collect_new(data) %>%
     write_csv(file.path(config('base_dir'),
-                        ifelse(local, dirs$local_dir, dirs$result_dir),
+                        base::ifelse(local, dirs$local_dir, dirs$result_dir),
                         paste0(name, '.csv')))
 }
 
@@ -539,8 +539,8 @@ copy_to_new <- function(dest = config('db_src'), df,
 #'   intermediate tables for internal use during request execution
 #' @md
 output_tbl <- function(data, name = NA, local = FALSE,
-                       file = ifelse(config('execution_mode') !=
-                                       'development', TRUE, FALSE),
+                       file = base::ifelse(config('execution_mode') !=
+                                             'development', TRUE, FALSE),
                        db = if (config('execution_mode') !=
                                   'distribution') config('db_src') else NA,
                        results_tag = TRUE, ...) {
