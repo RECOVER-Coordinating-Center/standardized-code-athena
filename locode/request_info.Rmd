@@ -23,7 +23,7 @@ kable(tribble( ~Item, ~Value,
                'Requester', config('requester_name'),
                'Sponsoring Member', config('requester_site'),
                'CDM Version', as.character(config('cdm_version')),
-               'Package Version', as.character(config('req_version')))
+               'Package Version', as.character(config('req_version'))))
 ```
 
 ## Request Summary
