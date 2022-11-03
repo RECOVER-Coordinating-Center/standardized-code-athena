@@ -132,13 +132,21 @@ config('local_name_tag', '_loc')
 
 #' Execution mode
 #'
-#' The intended execution mode for the reuqest.  Recognized values are:
+#' The intended execution mode for the request.  Recognized values are:
 #'
 #' * `development` - Development and testing still in progress
 #' * `production` - Intended for results generation
 #' * `distribution` - Production version for distribution to remote sites
 #' @md
 config('execution_mode', 'development')
+
+#' Place to write results
+#'
+#' * `file` - Write output to CSV files in `results` directory
+#' * TRUE - Write output to config('db_src')
+#' * DBI data source - Write output to database
+config('results_target',
+       if (config('execution_mode') == 'distribution') 'file' else TRUE)
 
 #' Request-specific debug output for database operations
 #'

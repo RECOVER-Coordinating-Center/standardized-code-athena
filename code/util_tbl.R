@@ -519,14 +519,15 @@ copy_to_new <- function(dest = config('db_src'), df,
 #' because you know it will be used in a future request).
 #'
 #' @param data The tbl to write.
-#' @param name The name (only) of the ouptut.  Defaults to the name of `data`.
+#' @param name The name (only) of the output  Defaults to the name of `data`.
 #' @param local A value indicating whether the data should be written to a
 #'   local-only location, which is not typically returned with query results.
 #' @param file An indicator of whether the data should be written out as a CSV
 #'   file.  If it is FALSE, no file will be written. If it is TRUE, a CSV file
-#'   will be written named `name`, with a `.csv` suffix appended.
+#'   will be written named _name_, with a `.csv` suffix appended.
 #' @param db A database connection, to which to write the results table.  If it
-#'   is FALSE or NA, no database table is written
+#'   is FALSE or NA, no database table is written.  If it is TRUE, then
+#'   config('db_src') is used.
 #' @param results_tag A value indicating whether to add a request tag to the
 #'   output name (see [intermed_name()]) iff the results are written to the
 #'   database.
@@ -539,10 +540,9 @@ copy_to_new <- function(dest = config('db_src'), df,
 #'   intermediate tables for internal use during request execution
 #' @md
 output_tbl <- function(data, name = NA, local = FALSE,
-                       file = base::ifelse(config('execution_mode') !=
-                                             'development', TRUE, FALSE),
-                       db = if (config('execution_mode') !=
-                                  'distribution') config('db_src') else NA,
+                       file = base::ifelse(config('results_target') == 'file',
+                                           TRUE, FALSE),
+                       db = if (! file) config('results_target') else NA,
                        results_tag = TRUE, ...) {
   if (is.na(name)) name <- quo_name(enquo(data))
 
