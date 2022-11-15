@@ -16,7 +16,9 @@ config_append('extra_packages', c())
 #' @md
 .run  <- function() {
 
-  message('Starting execution with framework version ',
+    setup_pkgs() # Load runtime packages as specified above
+
+    message('Starting execution with framework version ',
           config('framework_version'))
 
   # Set up the step log with as many attrition columns as you need.

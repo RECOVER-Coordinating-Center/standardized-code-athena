@@ -12,6 +12,19 @@ suppressPackageStartupMessages(library(dbplyr))
 # Required for execution using Rscript
 suppressPackageStartupMessages(library(methods))
 
+#' Load additional packages at runtime
+#'
+#' @param pkgs A character vector of package names
+#'
+#' @return The value of the last require()
+#' @md
+setup_pkgs <- function(pkgs = config('extra_packages')) {
+  if (! is.null(pkgs) && ! is.na(pkgs)) {
+    for (pkg in pkgs)
+      suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+  }
+}
+
 #' Set up the execution environment
 #'
 #' The .load() function sources the R files needed to execute the query and sets
@@ -58,10 +71,7 @@ suppressPackageStartupMessages(library(methods))
     source(file.path(here, config('subdirs')$code_dir, 'cohorts.R'))
     source(file.path(here, config('subdirs')$code_dir, driver))
 
-    if (config_exists('extra_packages')) {
-      for (pkg in config('extra_packages'))
-        suppressPackageStartupMessages(library(pkg, character.only = TRUE))
-    }
+    setup_pkgs()
 
     .env_setup()
 
