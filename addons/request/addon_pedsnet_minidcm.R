@@ -291,6 +291,7 @@ get_impersonal_tables <- function(personal_tables,
       if (!is.na(cleanup)) impdata <- do.call(cleanup, list(impdata))
       rslt[[tname]] <- .clean_table_base(impdata)
     }
+    rslt[[tname]]
   }
 
   for (tabl in personal_tables) {
@@ -301,7 +302,7 @@ get_impersonal_tables <- function(personal_tables,
     this <- select(tabl, any_of(links)) %>% distinct()
     for (f in fills) this <- mutate(this, '{f}' := as.numeric(NA))
     if (any(is.na(accum))) accum <- this else accum <- dplyr::union(accum, this)
-    if (cycle %% .cycle_limit == 0) {
+    if (!is.null(dbi_con(accum)) && cycle %% .cycle_limit == 0) {
       accum <- compute_new(accum,
                            name = paste0('prepip_',
                                          letters[toggle %% 2 + 1],
@@ -311,12 +312,15 @@ get_impersonal_tables <- function(personal_tables,
     }
     cycle <- cycle + 1
   }
-  if (cycle %% .cycle_limit == 0)
+  if (!is.null(dbi_con(accum)) && cycle %% .cycle_limit == 0)
     accum <- compute_new(accum,
                          name =  paste0('prepip_',
                                         letters[toggle %% 2 + 1],
                                         Sys.getpid()),
                          indexes = as.list(join_cols))
+  if (is.null(dbi_con(accum)) && ! is.null(dbi_con(metadata[1,]$tbl_expr[[1]])))
+    accum <- copy_to_new(dbi_con(metadata[1,]$tbl_expr[[1]]), accum,
+                         name = 'impers_accum')
 
   for (tname in pull(metadata, output_name)) {
     rslt[[tname]] <- get_output(tname)
@@ -347,11 +351,12 @@ get_concepts <- function(tables, output_name = 'concept', .cycle_limit = 5) {
     add_set <- function(label, set) {
       qlabel <- enquo(label)
       this <- select(tabl, concept_id = !!qlabel) %>% distinct()
-      if (is.na(set[1])) { set <- this } else { set <- dplyr::union(set, this) }
+      if (! is.object(set))
+        { set <- this } else { set <- dplyr::union(set, this) }
       set
     }
     cids <- grep('_concept_id$', tbl_vars(tabl), value = TRUE)
-    if (length(cids) > 2) {
+    if (!is.null(dbi_con(tabl)) && length(cids) > 2) {
       tname <- paste0('prepc_', cycle, '_', Sys.getpid())
       temps <- c(temps, tname)
       tabl <- tabl %>% select(any_of(cids)) %>%
@@ -360,7 +365,7 @@ get_concepts <- function(tables, output_name = 'concept', .cycle_limit = 5) {
     for (col in cids) {
       c_id <- add_set(col, c_id)
       cycle <- cycle + 1
-      if (cycle %%.cycle_limit == 0) {
+      if (!is.null(dbi_con(c_id)) && cycle %% .cycle_limit == 0) {
         c_id <- compute_new(c_id,
                             name =  paste0('accumc_',
                                            letters[toggle %% 2 + 1],
@@ -373,7 +378,7 @@ get_concepts <- function(tables, output_name = 'concept', .cycle_limit = 5) {
 
   message('Extracting concepts')
   rslt <- list(vocabulary_tbl('concept') %>%
-                 inner_join(distinct(c_id), by = 'concept_id'))
+                 inner_join(distinct(c_id), by = 'concept_id', copy = TRUE))
   names(rslt) = c(output_name)
 
   for (tmp in temps) db_remove_table(name = tmp, temporary = TRUE)
@@ -479,6 +484,8 @@ build_mini_cdm <-
     thismeta <- impersonal %>% filter(join_on %in% local(maybe_more))
     trial <- get_impersonal_tables(personal_tables = t_impersonal,
                                    metadata = thismeta, clean = clean)
+    if (! all(class(t_impersonal[[1]]) == class(trial[[1]])))
+      trial <- materialize_tbls(trial, thismeta)
     pre_cts <- map(t_impersonal, .f = function (x) pull(tally(ungroup(x))))
     walk(names(t_impersonal),
          .f = function (tname) {
