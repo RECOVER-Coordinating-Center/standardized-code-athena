@@ -481,7 +481,8 @@ build_mini_cdm <-
                                 'join_on'))
                }), c)
   while (length(maybe_more) > 0) {
-    thismeta <- impersonal %>% filter(join_on %in% local(maybe_more))
+    thismeta <- impersonal %>% filter(output_name %in% local(maybe_more))
+    if (pull(count(thismeta), n) == 0) break
     trial <- get_impersonal_tables(personal_tables = t_impersonal,
                                    metadata = thismeta, clean = clean)
     if (! all(class(t_impersonal[[1]]) == class(trial[[1]])))
