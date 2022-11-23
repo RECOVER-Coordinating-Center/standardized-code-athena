@@ -34,19 +34,23 @@
 #' @md
 dbi_con <- function(db) {
   # R introspection is very limited, so best approach is to keep trying.
+  if (! any(is.object(db))) return(NULL)
   rslt <- NULL
   # DBI Connection
   if (! is.null(tryCatch( DBI::dbDataType(db, 1L),
-                         error = function (e) NULL))) return(db)
+                          error = function (e) NULL))) return(db)
   # Modern dbplyr
-  if (! is.null(tryCatch( { rslt <- remote_con(db) },
-                         error = function (e) NULL))) return(rslt)
+  if (any(class(db) == 'tbl_sql') &&
+      ! is.null(tryCatch( { rslt <- remote_con(db) },
+                          error = function (e) NULL))) return(rslt)
   # Older dbplyr query - breaks encapsulation
-  if (! is.null(tryCatch( { rslt <- db$src$con },
-                         error = function (e) NULL))) return(rslt)
+  if (exists('src', where = db) &&
+      ! is.null(tryCatch( { rslt <- db$src$con },
+                          error = function (e) NULL))) return(rslt)
   # Older dbplyr connection - breaks encapsulation
-  if (! is.null(tryCatch( { rslt <- db$con },
-                         error = function (e) NULL))) return(rslt)
+  if (exists('con', where = db) &&
+      ! is.null(tryCatch( { rslt <- db$con },
+                          error = function (e) NULL))) return(rslt)
   rslt
 }
 
