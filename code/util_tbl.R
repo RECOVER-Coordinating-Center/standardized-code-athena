@@ -486,7 +486,7 @@ copy_to_new <- function(dest = config('db_src'), df,
   collect_new(data) %>%
     write_csv(file.path(config('base_dir'),
                         base::ifelse(local, dirs$local_dir, dirs$result_dir),
-                        paste0(name, '.csv')))
+                        paste0(name, '.csv')), na = '')
 }
 
 #' Output contents of a tbl
