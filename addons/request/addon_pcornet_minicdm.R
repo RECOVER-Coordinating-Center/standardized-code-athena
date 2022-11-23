@@ -282,6 +282,7 @@ get_impersonal_tables <- function(personal_tables,
       if (!is.na(cleanup)) impdata <- do.call(cleanup, list(impdata))
       rslt[[tname]] <- .clean_table_base(impdata)
     }
+    rslt[[tname]]
   }
 
   for (tabl in personal_tables) {
@@ -292,7 +293,7 @@ get_impersonal_tables <- function(personal_tables,
     this <- select(tabl, any_of(links)) %>% distinct()
     for (f in fills) this <- mutate(this, '{f}' := NA_character_)
     if (any(is.na(accum))) accum <- this else accum <- dplyr::union(accum, this)
-    if (cycle %% .cycle_limit == 0) {
+    if (!is.null(dbi_con(accum)) && cycle %% .cycle_limit == 0) {
       accum <- compute_new(accum,
                            name = paste0('prepip_',
                                          letters[toggle %% 2 + 1],
@@ -302,12 +303,15 @@ get_impersonal_tables <- function(personal_tables,
     }
     cycle <- cycle + 1
   }
-  if (cycle %% .cycle_limit == 0)
+  if (!is.null(dbi_con(accum)) && cycle %% .cycle_limit == 0)
     accum <- compute_new(accum,
                          name =  paste0('prepip_',
                                         letters[toggle %% 2 + 1],
                                         Sys.getpid()),
                          indexes = as.list(join_cols))
+  if (is.null(dbi_con(accum)) && ! is.null(dbi_con(metadata[1,]$tbl_expr[[1]])))
+    accum <- copy_to_new(dbi_con(metadata[1,]$tbl_expr[[1]]), accum,
+                         name = 'impers_accum')
 
   for (tname in pull(metadata, output_name)) {
     rslt[[tname]] <- get_output(tname)
@@ -413,6 +417,8 @@ build_mini_cdm <-
     thismeta <- impersonal %>% filter(join_on %in% local(maybe_more))
     trial <- get_impersonal_tables(personal_tables = t_impersonal,
                                    metadata = thismeta, clean = clean)
+    if (! all(class(t_impersonal[[1]]) == class(trial[[1]])))
+      trial <- materialize_tbls(trial, thismeta)
     pre_cts <- map(t_impersonal, .f = function (x) pull(tally(ungroup(x))))
     walk(names(t_impersonal),
          .f = function (tname) {
