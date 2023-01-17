@@ -18,7 +18,7 @@
 #' Your site's name.
 #' For technical reasons, it should be lowercase.
 #' @md
-config('site', 'site_name')
+config('qry_site', 'site_name')
 
 #' Code to establish a database connection at your site.
 #'

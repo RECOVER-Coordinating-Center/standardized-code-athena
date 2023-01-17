@@ -21,7 +21,7 @@
 
 #' Your site's name.
 #' @md
-config('site', 'site_name')
+config('qry_site', 'site_name')
 
 #' Code to establish a database connection at your site.
 #'

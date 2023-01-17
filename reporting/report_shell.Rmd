@@ -99,7 +99,7 @@ patients from `r summarise(cohort, ct = n_distinct(site)) %>% pull(ct)` sites.
 # DBI doesn't have a good way to interrogate tables in a specified schema,
 # so you have to list the step logs you want to summarise (e.g. DCC + remote
 # sites).
-step_log <- list(config('site')) %>%
+step_log <- list(config('qry_site')) %>%
   map(.f = function(x) {
     get_results(paste0(x, '_steps'))
   }) %>%

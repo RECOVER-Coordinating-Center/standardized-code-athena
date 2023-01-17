@@ -29,7 +29,7 @@
        config('execution_mode') == 'distribution' ) {
     logf <- file(file.path(base_dir,
                            config('subdirs')$result_dir,
-                           paste0(config('site'), '.log')), open = 'wt')
+                           paste0(config('qry_site'), '.log')), open = 'wt')
     sink(logf, type = 'output')
     sink(logf, type = 'message')
   }

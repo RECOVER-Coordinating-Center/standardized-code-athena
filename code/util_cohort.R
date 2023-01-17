@@ -29,7 +29,7 @@
 #' @md
 init_sum <- function(..., set_default = TRUE) {
   x <- tibble(!!! dots_list(...),
-              site = config('site'),
+              qry_site = config('qry_site'),
               stamp = Sys.time(),
               used = paste(proc.time(), collapse = ';'))
   if (set_default) config('_step_log', x)
@@ -55,7 +55,7 @@ init_sum <- function(..., set_default = TRUE) {
 append_sum <- function(..., step_log = NA) {
   events <- if (is.na(step_log)) config('_step_log') else step_log
   x <- dplyr::union(tibble(!!! dots_list(...),
-                           site = config('site'),
+                           qry_site = config('qry_site'),
                            stamp = Sys.time(),
                            used = paste(proc.time(), collapse = ';')),
                     events)
@@ -77,7 +77,7 @@ append_sum <- function(..., step_log = NA) {
 #' @seealso [init_sum()], [append_sum()]
 #' @md
 output_sum <- function(step_log = config('_step_log'),
-                       name = paste0(config('site'), '_steps'),
+                       name = paste0(config('qry_site'), '_steps'),
                        ...) {
   output_tbl(step_log, name = name, ...)
 }
@@ -245,7 +245,7 @@ scrub_person_info <- function(cohort, person_xwalk = NA,
 #'
 #' For multisite databases, a join is done to a linking table to add a
 #' `site` column to the input.  For single-site databases, the value
-#' of `config('site')` is used as the content for the newly-added
+#' of `config('qry_site')` is used as the content for the newly-added
 #' `site` column.
 #'
 #' @param f_tbl the tbl that needs to be joined to obtain site
@@ -270,7 +270,7 @@ add_site <- function(f_tbl,
                 copy = !same_src(site_tbl, f_tbl))
   }
   else {
-    val <- config('site')
+    val <- config('qry_site')
     if ( is.null(val) ) val <- 'unknown'
     f_tbl <- f_tbl %>% mutate('site' = val)
   }
