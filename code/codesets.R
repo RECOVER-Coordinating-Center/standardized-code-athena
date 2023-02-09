@@ -71,7 +71,7 @@ load_codeset <- function(name,
   }
   codes <-
     copy_to_new(db,
-                read_codeset(name, col_types),
+                read_codeset(name, col_types = col_types, full_path = full_path),
                 name = table_name,
                 overwrite = TRUE,
                 indexes = indexes)
