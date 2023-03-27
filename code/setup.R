@@ -80,6 +80,12 @@ setup_pkgs <- function(pkgs = config('extra_packages')) {
         config(def, config(paste0('default_', def)))
     }
 
+    if (config_exists('db_src')) {
+      ci <- DBI::dbGetInfo(config('db_src'))
+      message('Default database connection is: ',
+              ci$dbname, '@', ci$host)
+    }
+
     here
 }
 

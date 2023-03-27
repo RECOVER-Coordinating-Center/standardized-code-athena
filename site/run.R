@@ -65,7 +65,7 @@ req_basename <- NA
 #' @md
 base_dir <- 'auto-detect'
 
-if (base_dir == 'auto-detect')
+if (base_dir == 'auto-detect') {
     base_dir <-
       {
        preferred <- Sys.getenv('PEDSNET_DATA_REQUEST_ROOT',
@@ -89,6 +89,8 @@ if (base_dir == 'auto-detect')
             }
           }
       }
+    message('Inferred request base directory of ', base_dir)
+}
 
 source(file.path(base_dir, 'code', 'config.R'))
 config('base_dir', base_dir)
