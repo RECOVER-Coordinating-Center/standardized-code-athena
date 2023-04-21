@@ -333,12 +333,8 @@ db_exists_table <- function(db = config('db_src'), name) {
                             DBI::dbQuoteString(con, elts[1]), sep = ""))
     return(as.logical(dim(res)[1]))
   }
-  else if (any(class(con) == 'PqConnection') &&
-           length(elts) > 1) {
-    name <- DBI::SQL(paste0(DBI::dbQuoteIdentifier(con, elts[1]),
-                               '.',
-                               DBI::dbQuoteIdentifier(con, elts[2])))
-    return(DBI::dbExistsTable(con, name))
+  else if (any(class(con) == 'PqConnection') && length(elts) > 1) {
+    return(DBI::dbExistsTable(con, DBI::Id(elts)))
   }
   else {
     return(DBI::dbExistsTable(con, elts))
