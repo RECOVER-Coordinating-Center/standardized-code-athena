@@ -284,14 +284,14 @@ get_impersonal_tables <- function(personal_tables,
     tdata <- metadata %>% filter(output_name == local(tname))
     join_col <- pull(tdata, join_on)
     probe <- select(accum, any_of(join_col)) %>% distinct()
-    rslt[[tname]] <- inner_join(pull(tdata, tbl_expr)[[1]], probe, by = join_col)
+    this_rslt <- inner_join(pull(tdata, tbl_expr)[[1]], probe, by = join_col)
     if (clean) {
-      impdata <- rslt[[tname]]
+      impdata <- this_rslt
       cleanup <- pull(tdata, cleanup_name)
       if (!is.na(cleanup)) impdata <- do.call(cleanup, list(impdata))
-      rslt[[tname]] <- .clean_table_base(impdata)
+      this_rslt <- .clean_table_base(impdata)
     }
-    rslt[[tname]]
+    this_rslt
   }
 
   for (tabl in personal_tables) {
