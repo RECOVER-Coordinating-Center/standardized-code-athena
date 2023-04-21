@@ -70,7 +70,7 @@ minicdm.pedsnet.vignette <- function() {
 # desensitization.
 .clean_table_base <- function(table) {
     table %>%
-    select(-any_of('site', 'site_id'),
+    select(-any_of(c('site', 'site_id')),
            -ends_with('concept_name'),
            -ends_with('age_in_months'))
 }
