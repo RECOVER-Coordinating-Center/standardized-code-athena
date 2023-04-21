@@ -217,6 +217,30 @@ results_name <- function(name, results_tag =  TRUE, local_tag = NA,
                 local_tag = local_tag, db = db)
 }
 
+# Try to figure out schema/table expressions in various forms
+.parse_tblspec <- function(spec) {
+  if (inherits(spec, 'Id')) {
+    elts <- spec
+  }
+  else if (inherits(spec, c('ident_q', 'dbplyr_schema'))) {
+    elts <- format(spec)
+  }
+  else if ((grepl('.', spec, fixed = TRUE) && ! grepl('["`]', spec))) {
+    # If we have an unquoted string with a '.', assume schema.table
+    elts <- unlist(strsplit(as.character(spec), '.', fixed = TRUE))
+  }
+  else if (grepl('["`].+["`]\\.["`]', spec)) {
+    # And one simple-minded try at a quoted identifier string
+    elts <-
+      gsub('["`]', '',
+           unlist(strsplit(as.character(spec), '["`].["`]')))
+  }
+  else {
+    elts <- spec
+  }
+  names(elts) <- rev(c('table', 'schema', 'catalog')[1:length(elts)])
+  elts
+}
 #' Drop a table in a database, schema-aware
 #'
 #' This function has the same purpose as [DBI::dbRemoveTable()], but many
@@ -240,13 +264,8 @@ results_name <- function(name, results_tag =  TRUE, local_tag = NA,
 db_remove_table <- function(db = config('db_src'), name,
                             temporary = FALSE, fail_if_missing = FALSE) {
   con <- dbi_con(db)
-  if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
-    elts <- gsub('"', '',
-                 unlist(strsplit(as.character(name), '.', fixed = TRUE)))
-  }
-  else {
-    elts <- name
-  }
+  elts <- .parse_tblspec(name)
+
   sql <- paste0('drop table ',
                 base::ifelse(fail_if_missing, '', 'if exists '))
   if (any(grepl('ora', class(con), ignore.case = TRUE))) {
@@ -294,13 +313,8 @@ db_remove_table <- function(db = config('db_src'), name,
 #' @md
 db_exists_table <- function(db = config('db_src'), name) {
   con <- dbi_con(db)
-  if (inherits(name, c('ident_q', 'dbplyr_schema'))) {
-    elts <- gsub('"', '',
-                 unlist(strsplit(as.character(name), '.', fixed = TRUE)))
-  }
-  else {
-    elts <- name
-  }
+  elts <- .parse_tblspec(name)
+
   if (any(grepl('ora', class(con), ignore.case = TRUE)) &&
       length(elts) > 1) {
     elts <- rev(elts)
