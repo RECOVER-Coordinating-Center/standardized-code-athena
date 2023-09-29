@@ -94,6 +94,8 @@ if (base_dir == 'auto-detect') {
 
 source(file.path(base_dir, 'code', 'config.R'))
 config('base_dir', base_dir)
+# Start with empty set of additional packages
+config('extra_packages', c())
 
 #' Please edit: local database configuration information
 #'
