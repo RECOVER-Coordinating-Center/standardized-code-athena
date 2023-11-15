@@ -106,5 +106,5 @@ setup_pkgs <- function(pkgs = config('extra_packages')) {
 run_request <- function(base_dir, driver = 'driver.R') {
     base_dir <- .load(base_dir)
     on.exit(.env_cleanup())
-    .run(base_dir)
+    .run()
 }
