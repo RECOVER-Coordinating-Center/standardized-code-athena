@@ -572,7 +572,7 @@ output_tbl <- function(data, name = NA, local = FALSE,
                            results_tag = results_tag, local_tag = local)
     if (any(class(data)  == 'tbl_sql') &&
         identical(dbi_con(data), dbi_con(db))) {
-      rslt <- compute_new(data, rname, temporary = FALSE, db = db, ...)
+      rslt <- compute_new(data, rname, temporary = FALSE, ...)
     }
     else {
       rslt <- copy_to_new(db, collect_new(data), rname,
