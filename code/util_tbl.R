@@ -389,7 +389,7 @@ compute_new <- function(tblx,
     if (db_exists_table(con, name)) db_remove_table(con, name)
     if (config('db_trace')) {
       show_query(tblx)
-      explain(tblx)
+      if (config('can_explain')) explain(tblx)
       message(' -> ',
               base::ifelse(packageVersion('dbplyr') < '2.0.0',
                            dbplyr::as.sql(name),
@@ -422,7 +422,7 @@ collect_new <- function(tblx, ...) {
   if (config('db_trace')) {
     if (inherits(tblx, 'tbl_sql')) {
       show_query(tblx)
-      explain(tblx)
+      if (config('can_explain')) explain(tblx)
     }
     message(' -> collect')
     start <- Sys.time()

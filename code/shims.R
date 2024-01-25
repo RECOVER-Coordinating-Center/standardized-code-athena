@@ -34,6 +34,10 @@
     sink(logf, type = 'message')
   }
 
+  config('can_explain',
+         !is.na(tryCatch(db_explain(config('db_src'), 'select 1 = 1'),
+                         error = function(e) NA)))
+
   if (packageVersion('dbplyr') < '1.3.1') {
     assignInNamespace('arrange.tbl_lazy',
                       function(.data, ..., .by_group = FALSE) {
@@ -239,14 +243,6 @@
                                           temporary = temporary,
                                           overwrite = FALSE, row.names = FALSE, ...)
                       tabname
-                    }, ns = 'dbplyr')
-
-  # Oracle can obviously produce explain plans, but it requires
-  # outside table setup, so for now we skip it
-  assignInNamespace('db_explain.DBIConnection',
-                    function(con, sql, ...) {
-                      message("explain() not currently implemented for Oracle")
-                      invisible('None')
                     }, ns = 'dbplyr')
 
   if (packageVersion('dbplyr') < '2.0.0') {
