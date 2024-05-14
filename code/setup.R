@@ -19,7 +19,7 @@ suppressPackageStartupMessages(library(methods))
 #' @return The value of the last require()
 #' @md
 setup_pkgs <- function(pkgs = config('extra_packages')) {
-  if (! is.null(pkgs) && ! is.na(pkgs)) {
+  if (! all(is.null(pkgs)) && ! all(is.na(pkgs))) {
     for (pkg in pkgs)
       suppressPackageStartupMessages(library(pkg, character.only = TRUE))
   }
