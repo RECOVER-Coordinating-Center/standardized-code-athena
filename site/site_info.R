@@ -40,7 +40,7 @@ config('qry_site', 'site_name')
 #'
 #' @md
 rathena_reconnect <- function(){
-  crd <- RAthena::assume_role(role_arn = "arn:aws:iam::735867041078:role/sagemaker-etl-assumed-role",
+  crd <- RAthena::assume_role(role_arn = "arn:aws:iam::735867041078:role/sagemaker-analytics-assumed-role",
                        set_env = FALSE,
                        duration = 3600L)
   conn <- DBI::dbConnect(
