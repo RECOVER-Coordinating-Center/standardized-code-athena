@@ -39,26 +39,40 @@ config('qry_site', 'site_name')
 #'     * `Sys.setenv(ORA_SDTZ=Sys.timezone())`
 #'
 #' @md
-config('db_src', {
-  require(srcr);
-  default <- Sys.getenv('PEDSNET_DB_SRC_CONFIG_BASE', unset = NA)
-  if (is.na(default) || nchar(default) == 0) default <- 'argos_pedsnet_current'
-  srcr(default)
-})
+rathena_reconnect <- function(){
+  crd <- RAthena::assume_role(role_arn = "arn:aws:iam::735867041078:role/sagemaker-etl-assumed-role",
+                       set_env = FALSE,
+                       duration = 3600L)
+  conn <- DBI::dbConnect(
+    RAthena::athena(),
+    work_group='recover-chop',
+    aws_access_key_id=crd$AccessKeyId,
+    aws_secret_access_key=crd$SecretAccessKey,
+    aws_session_token=crd$SessionToken
+  )
+  config('db_src', conn)
+}
+# config('db_src', {
+#   require(srcr);
+#   default <- Sys.getenv('PEDSNET_DB_SRC_CONFIG_BASE', unset = NA)
+#   if (is.na(default) || nchar(default) == 0) default <- 'argos_pedsnet_current'
+#   srcr(default)
+# })
+rathena_reconnect()
 
 #' Name of the schema, if any, to be prepended to CDM fact table names.
 #'
 #' @details
 #' If `NA`, no schema qualifier is added.
 #' @md
-config('cdm_schema', 'pedsnet')
+config('cdm_schema', 'peds_omop_dev_s12')
 
 #' Name of the schema, if any, to be prepended to vocabulary tables.
 #'
 #' @details
 #' If `NA`, no schema qualifier is added.
 #' @md
-config('vocabulary_schema', 'vocabulary')
+config('vocabulary_schema', 'recover_dev_s12')
 
 #' Name of the schema in which to create intermediate and results tables
 #'
@@ -76,7 +90,7 @@ config('default_results_schema', NA)
 #' `FALSE`, they are created as temporary tables.  It can be overridden by the
 #' request-specific setting in `run.R`.
 #' @md
-config('default_retain_intermediates', FALSE)
+config('default_retain_intermediates', TRUE)
 
 #' Names of standard tables used in queries.
 #'
@@ -114,8 +128,8 @@ config('table_names',
             provider = 'provider',
             visit_occurrence = 'visit_occurrence',
             visit_payer = 'visit_payer',
-            concept = 'concept',
-            concept_ancestor = 'concept_ancestor',
-            concept_relationship = 'concept_relationship'))
+            concept = 'vocabulary_concept',
+            concept_ancestor = 'vocabulary_concept_ancestor',
+            concept_relationship = 'vocabulary_concept_relationship'))
 
 #> ##################### End of site-specific configuration

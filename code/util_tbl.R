@@ -285,6 +285,13 @@ db_remove_table <- function(db = config('db_src'), name,
                                DBI::dbQuoteIdentifier(con, elts[2])))
     DBI::dbExecute(con, paste0(sql, name))
   }
+  # Logic for AWS Athena
+  # Athena rejects drop commands with " as quote identifier, it expects ` for drop commands.
+  # https://docs.aws.amazon.com/athena/latest/ug/drop-table.html
+  else if (any(class(con) == "AthenaConnection")){
+    name <- paste0("`", paste0(elts, collapse='.'), "`")
+    DBI::dbExecute(con, paste0(sql, name))
+  }
   else {
     name <- paste0(vapply(elts, function (x) DBI::dbQuoteIdentifier(con, x),
                              FUN.VALUE = character(1)), collapse = '.')
@@ -335,6 +342,9 @@ db_exists_table <- function(db = config('db_src'), name) {
   }
   else if (any(class(con) == 'PqConnection') && length(elts) > 1) {
     return(DBI::dbExistsTable(con, DBI::Id(elts)))
+  }
+  else if (any(class(con) == 'AthenaConnection') && length(elts) > 1) {
+    return(DBI::dbExistsTable(con, paste0(elts, collapse='.')))
   }
   else {
     return(DBI::dbExistsTable(con, elts))
@@ -396,6 +406,11 @@ compute_new <- function(tblx,
                            dbplyr::as.sql(name, con)))
       start <- Sys.time()
       message(start)
+    }
+    if (any(class(con) == "AthenaConnection") && inherits(name, c('dbplyr_schema'))) {
+      # RAthena only accepts character name in db_compute
+      elts <- .parse_tblspec(name)
+      name <- paste0(elts, collapse = '.')
     }
     rslt <- dplyr::compute(tblx, name = name, temporary = temporary, ...)
     if (config('db_trace')) {
