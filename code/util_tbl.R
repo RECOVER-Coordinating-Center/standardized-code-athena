@@ -500,7 +500,15 @@ copy_to_new <- function(dest = config('db_src'), df,
   if (any(class(dest) == "AthenaConnection") && inherits(name, c('dbplyr_schema'))) {
     # RAthena only accepts character name in copy_to
     elts <- .parse_tblspec(name)
-    name <- paste0(elts, collapse = '.')
+    name_char <- paste0(elts, collapse = '.')
+    rslt <- dplyr::copy_to(dest = dest, df = df, name = name_char,
+                          overwrite = overwrite, temporary = temporary,
+                          ...)
+    if (config('db_trace')) {
+      end  <- Sys.time()
+      message(end, ' ==> ', format(end - start))
+    }
+    return(tbl(dest,name))
   }
   rslt <- dplyr::copy_to(dest = dest, df = df, name = name,
                          overwrite = overwrite, temporary = temporary,
