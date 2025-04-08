@@ -39,26 +39,14 @@ config('qry_site', 'site_name')
 #'     * `Sys.setenv(ORA_SDTZ=Sys.timezone())`
 #'
 #' @md
-rathena_reconnect <- function(){
-  crd <- RAthena::assume_role(role_arn = "arn:aws:iam::735867041078:role/sagemaker-analytics-assumed-role",
-                       set_env = FALSE,
-                       duration = 3600L)
-  conn <- DBI::dbConnect(
-    RAthena::athena(),
-    work_group='recover-chop',
-    aws_access_key_id=crd$AccessKeyId,
-    aws_secret_access_key=crd$SecretAccessKey,
-    aws_session_token=crd$SessionToken
-  )
-  config('db_src', conn)
-}
+config('db_src', DBI::dbConnect(RAthena::athena(), work_group='recover-chop'))
+
 # config('db_src', {
 #   require(srcr);
 #   default <- Sys.getenv('PEDSNET_DB_SRC_CONFIG_BASE', unset = NA)
 #   if (is.na(default) || nchar(default) == 0) default <- 'argos_pedsnet_current'
 #   srcr(default)
 # })
-rathena_reconnect()
 
 #' Name of the schema, if any, to be prepended to CDM fact table names.
 #'
