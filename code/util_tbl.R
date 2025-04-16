@@ -289,8 +289,8 @@ db_remove_table <- function(db = config('db_src'), name,
   # Athena rejects drop commands with " as quote identifier, it expects ` for drop commands.
   # https://docs.aws.amazon.com/athena/latest/ug/drop-table.html
   else if (any(class(con) == "AthenaConnection")){
-    name <- paste0("`", paste0(elts, collapse='.'), "`")
-    DBI::dbExecute(con, paste0(sql, name))
+    name <- paste0(paste0(elts, collapse='.'))
+    DBI::dbRemoveTable(con, name, delete_data=T, confirm=F)
   }
   else {
     name <- paste0(vapply(elts, function (x) DBI::dbQuoteIdentifier(con, x),

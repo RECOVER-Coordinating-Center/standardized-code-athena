@@ -88,8 +88,89 @@
   if (any(class(db) == 'OraConnection')) .ora_env_setup(db)
   else if (any(class(db) == 'PqConnection')) .pq_env_setup(db)
   else if (any(class(db) == 'PostgreSQLConnection')) .pgsql_env_setup(db)
+  else if (any(class(db) == 'AthenaConnection')) .athena_env_setup(db)
 
   invisible(TRUE)
+}
+
+.athena_env_setup <- function(db = config('db_src')) {
+  setMethod(
+    "dbRemoveTable", c("AthenaConnection", "character"),
+    function(conn, name, delete_data = TRUE, confirm = FALSE, ...) {
+      RAthena:::con_error_msg(conn, msg = "Connection already closed.")
+      stopifnot(
+        is.logical(delete_data),
+        is.logical(confirm)
+      )
+      ll <- RAthena:::db_detect(conn, name)
+      
+      tryCatch(TableType <- conn@ptr$glue$get_table(DatabaseName = ll[["dbms.name"]], Name = ll[["table"]])[["Table"]][["TableType"]],
+               error = function(e) RAthena:::py_error(e)
+      )
+      
+      if (delete_data && reticulate::py_to_r(TableType) == "EXTERNAL_TABLE") {
+        tryCatch(
+          s3_path <- RAthena:::split_s3_uri(
+            conn@ptr$glue$get_table(DatabaseName = ll[["dbms.name"]], Name = ll[["table"]])[["Table"]][["StorageDescriptor"]][["Location"]]
+          ),
+          error = function(e) RAthena:::py_error(e)
+        )
+        # Detect if key ends with "/" or if it has ".": https://github.com/DyfanJones/noctua/issues/125
+        if (!grepl("\\.|/$", s3_path$key)) {
+          s3_path[["key"]] <- sprintf("%s/", s3_path[["key"]])
+        }
+        all_keys <- list()
+        # Get all s3 objects linked to table
+        i <- 1
+        kwargs <- list(Bucket = s3_path[["bucket"]], Prefix = s3_path[["key"]])
+        token <- ""
+        while (!is.null(token)) {
+          kwargs[["ContinuationToken"]] <- (if (!nzchar(token)) NULL else token)
+          objects <- reticulate::py_to_r(do.call(conn@ptr$S3$list_objects_v2, kwargs))
+          all_keys[[i]] <- lapply(objects$Contents, function(x) list(Key = x$Key))
+          token <- objects$NextContinuationToken
+          i <- i + 1
+        }
+        RAthena:::info_msg(
+          "The S3 objects in prefix will be deleted:\n",
+          paste0("s3://", s3_path$bucket, "/", s3_path$key)
+        )
+        if (!confirm) {
+          confirm <- readline(prompt = "Delete files (y/n)?: ")
+          if (tolower(confirm) != "y") {
+            info_msg("Table deletion aborted.")
+            return(NULL)
+          }
+        }
+        
+        all_keys <- unlist(all_keys, recursive = FALSE, use.names = FALSE)
+        
+        # Only remove if files are found
+        if (length(all_keys) > 0) {
+          # Delete S3 files in batch size 1000
+          key_parts <- RAthena:::split_vec(all_keys, 1000)
+          for (i in seq_along(key_parts)) {
+            conn@ptr$S3$delete_objects(Bucket = s3_path$bucket, Delete = list(Objects = key_parts[[i]]))
+          }
+        } else {
+          warning(sprintf(
+            'Failed to remove AWS S3 files from: "s3://%s/%s". Please check if AWS S3 files exist.',
+            s3_path$bucket, s3_path$key
+          ), call. = F)
+        }
+      }
+      
+      # use glue to remove table from glue catalog
+      tryCatch(conn@ptr$glue$delete_table(DatabaseName = ll[["dbms.name"]], Name = ll[["table"]]),
+               error = function(e) py_error(e)
+      )
+      
+      if (!delete_data) info_msg("Only Athena table has been removed.")
+      RAthena:::on_connection_updated(conn, ll[["table"]])
+      invisible(TRUE)
+    }
+  )
+  
 }
 
 .pq_env_setup <- function(db = config('db_src')) {
