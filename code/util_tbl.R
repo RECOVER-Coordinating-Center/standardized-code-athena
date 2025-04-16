@@ -290,7 +290,7 @@ db_remove_table <- function(db = config('db_src'), name,
   # https://docs.aws.amazon.com/athena/latest/ug/drop-table.html
   else if (any(class(con) == "AthenaConnection")){
     name <- paste0(paste0(elts, collapse='.'))
-    DBI::dbRemoveTable(con, name, delete_data=T, confirm=F)
+    DBI::dbRemoveTable(con, name, delete_data=T, confirm=T)
   }
   else {
     name <- paste0(vapply(elts, function (x) DBI::dbQuoteIdentifier(con, x),
