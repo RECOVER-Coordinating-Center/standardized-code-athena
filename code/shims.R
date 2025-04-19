@@ -93,9 +93,13 @@
   invisible(TRUE)
 }
 
+# Athena Drop Table command only drops Glue metadata, but not files on S3
+# dbRemoveTable implementation will drop metadata and also delete files on S3
+# Fix https://github.com/DyfanJones/RAthena/issues/186
 .athena_env_setup <- function(db = config('db_src')) {
   setMethod(
-    "dbRemoveTable", c("AthenaConnection", "character"),
+    getGeneric("dbRemoveTable", where = getNamespace("DBI")),
+    c("AthenaConnection", "character"),
     function(conn, name, delete_data = TRUE, confirm = FALSE, ...) {
       RAthena:::con_error_msg(conn, msg = "Connection already closed.")
       stopifnot(
